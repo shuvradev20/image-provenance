@@ -1,0 +1,18 @@
+export const PROVENANCE_ABI = [
+    // User & Admin Events
+    "event UserRegistered(address indexed user)",
+    "event UserRevoked(address indexed user)",
+    "event AdminAdded(address indexed newAdmin)",
+    "event AdminRemoved(address indexed admin)",
+    
+    // Image Events
+    "event ImageRegistered(address indexed creator, bytes32 hash, string metadataCID)",
+    "event ImageTransferred(bytes32 indexed hash, address indexed from, address indexed to)",
+    "event ImageFlagged(bytes32 indexed hash)",
+    "event ImageUnflagged(bytes32 indexed hash)",
+    "event ImageBurned(bytes32 indexed hash, address indexed owner)",
+    "event MetadataUpdated(bytes32 indexed hash, string oldMetadataCID, string newMetadataCID)"
+];
+
+export const PROVENANCE_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const RPC_URL = "http://127.0.0.1:8545";

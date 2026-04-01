@@ -1,0 +1,15 @@
+# Dependencies & Build Output
+node_modules/
+dist/
+
+# Security Secrets
+.env
+.env.*
+
+# Node Logs
+*.log
+npm-debug.log*
+
+# OS & Editor Files
+Thumbs.db
+.vscode/
