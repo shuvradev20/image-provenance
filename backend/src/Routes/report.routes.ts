@@ -8,8 +8,8 @@ const router = Router();
 
 router.use(verifyJWT);
 
-router.route("/:hash").post(reportImage)
-router.route("/admin/all").get(isAdmin, getAllReports)
+router.route("/submit/:hash").post(reportImage)
+router.route("/all-reports").get(isAdmin, getAllReports)
 router.route("/admin/status/:reportId").patch(isAdmin, updateReportStatus)
 
 export default router;

@@ -3,6 +3,11 @@ import { ApiError } from "../Utils/ApiError.js"
 import { type CustomRequest } from "./auth.middleware.js"
 import { asyncHandler } from "../Utils/asyncHandler.js"
 
+/**
+ * @middleware isAdmin
+ * @description Verifies if the authenticated user has basic administrative privileges.
+ * Allows both 'admin' and 'owner' roles to proceed. Used for general moderation tasks.
+ */
 export const isAdmin = asyncHandler(async(req: CustomRequest, res: Response, next: NextFunction) => {
     const user = req.user
 
@@ -10,7 +15,7 @@ export const isAdmin = asyncHandler(async(req: CustomRequest, res: Response, nex
         throw new ApiError(401, "Anauthorized request. User not found")
     }
 
-    if(user.role !== "owner") {
+    if(user.role !== "owner" && user.role !== "admin") {
         throw new ApiError(403, "Access denied! You do not have admin privilage.")
     }
 

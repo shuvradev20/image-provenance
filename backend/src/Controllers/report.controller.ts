@@ -6,22 +6,53 @@ import { ApiResponse } from "../Utils/ApiResponse.js";
 import { Image } from "../Models/image.models.js";
 import { Report } from "../Models/report.models.js";
 
+// --- Interfaces for Request Data ---
 
+/**
+ * @interface IReportImageRequest
+ * @description Structure for reporting an image, including optional copyright proof.
+ */
+interface IReportImageRequest {
+    reportType: 'Copyright Violation' | 'Inappropriate Content' | 'Spam' | 'Other';
+    proofHash?: string;
+    reason: string;
+}
+
+/**
+ * @interface IUpdateReportStatusRequest
+ * @description Structure for admin to update a report's lifecycle status.
+ */
+interface IUpdateReportStatusRequest {
+    status: 'reviewed' | 'resolved' | 'ignored';
+    adminNote?: string;
+}
+
+// --- Image Reporting ---
+
+/**
+ * @route POST /api/v1/reports/submit/:hash
+ * @description Allows authenticated users to report images for violations.
+ * Requires a proof hash specifically for copyright claims to maintain provenance integrity.
+ */
 const reportImage = asyncHandler(async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
     const { hash } = req.params;
-    const { reportType, proofHash, reason } = req.body;
 
+    // Using Interface to strictly define body types
+    const { reportType, proofHash, reason } = req.body as IReportImageRequest
+
+    // Type Guard for URL parameters
     if(!customReq.user) {
         throw new ApiError(401, "You must be logged in to report an image");
     }
 
-    if (!hash || Array.isArray(hash)) {
-        throw new ApiError(400, "Image hash is required in the URL parameters");
+    if (!hash || typeof hash !== 'string') {
+        throw new ApiError(400, "A valid Image hash is required in the URL parameters");
     }
 
     const reporterId = customReq.user._id;
 
+    // Strict validation for copyright claims
     if(!reportType || !reason || reason.trim() === "") {
         throw new ApiError(400, "Report type and reason are mendatory");
     }
@@ -36,6 +67,7 @@ const reportImage = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(404, "Image not found")
     }
 
+    // One report per user per image
     const existingReport = await Report.findOne({reportedImage: image._id, reporter: reporterId})
 
     if(existingReport) {
@@ -57,10 +89,17 @@ const reportImage = asyncHandler(async (req: Request, res: Response) => {
     )
 })
 
+// --- Admin Reporting Management ---
+
+/**
+ * @route GET /api/v1/reports/all
+ * @description Retrieves all reports, optionally filtered by status.
+ * Heavily populated to provide admins with full context for moderation.
+ */
 const getAllReports = asyncHandler(async (req: Request, res: Response) => {
     const { status } = req.query;
 
-    const query = status ? {status} : {};
+    const query = status && typeof status === 'string' ? {status} : {};
 
     const reports = await Report.find(query)
         .populate("reporter", "fullName email nid")
@@ -72,9 +111,17 @@ const getAllReports = asyncHandler(async (req: Request, res: Response) => {
     )
 })
 
+/**
+ * @route PATCH /api/v1/reports/update-status/:reportId
+ * @description Updates the moderation status of a report with admin comments.
+ */
 const updateReportStatus = asyncHandler(async (req: Request, res: Response) => {
     const { reportId } = req.params
-    const { status, adminNote } = req.body;
+    const { status, adminNote } = req.body as IUpdateReportStatusRequest;
+
+    if (!reportId || typeof reportId !== 'string') {
+        throw new ApiError(400, "Valid Report ID is required");
+    }
 
     const validStatuses = ['reviewed', 'resolved', 'ignored'];
     if (!validStatuses.includes(status)) {

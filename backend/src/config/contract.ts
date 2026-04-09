@@ -11,7 +11,9 @@ export const PROVENANCE_ABI = [
     "event ImageFlagged(bytes32 indexed hash)",
     "event ImageUnflagged(bytes32 indexed hash)",
     "event ImageBurned(bytes32 indexed hash, address indexed owner)",
-    "event MetadataUpdated(bytes32 indexed hash, string oldMetadataCID, string newMetadataCID)"
+    "event MetadataUpdated(bytes32 indexed hash, string oldMetadataCID, string newMetadataCID)",
+
+    "function images(bytes32) view returns (bytes32 imageHash, string metadataCID, address owner, uint256 timestamp, bool isTampered, bool isBurned)"
 ];
 
 export const PROVENANCE_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";

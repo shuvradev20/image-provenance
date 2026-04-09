@@ -1,13 +1,21 @@
 import mongoose, { Schema, type Document } from "mongoose";
 
+// --- Image Provenance Interface ---
+
+/**
+ * @interface IImage
+ * @description Represents the digital provenance and metadata of an image.
+ * This interface bridges our MongoDB storage with IPFS and Blockchain data, 
+ * ensuring every image has a verifiable history.
+ */
 export interface IImage extends Document {
     uploader: mongoose.Types.ObjectId;
     currentOwner: string;
     title: string;
     description: string;
-    imageHash: string;
-    imageCID: string;
-    metadataCID: string;
+    imageHash: string; // Unique cryptographic hash of the raw image data
+    imageCID: string; // IPFS Content Identifier for the image file
+    metadataCID: string; // CID of the JSON file containing all info, including the CID of image
     transactionHash?: string;
     isBurned: boolean;
     isTampered: boolean;
@@ -56,7 +64,7 @@ const imageSchema = new Schema<IImage>({
     transactionHash: {
         type: String,
         unique: true,
-        sparse: true
+        sparse: true // Allows multiple 'pending' images without a transaction hash yet
     },
     isTampered: {
         type: Boolean,

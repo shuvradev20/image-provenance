@@ -2,10 +2,17 @@ import mongoose, {Schema, type Document} from "mongoose";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js"
 
+// --- User Model Interface ---
+
+/**
+ * @interface IUser
+ * @description Defines the core User entity for the system. 
+ * Supports a hybrid authentication model (Web3 Wallet + Traditional Identity).
+ */
 export interface IUser extends Document {
     walletAddress: string;
     email: string;
-    nonce: string;
+    nonce: string; // Used for cryptographically signing messages in Web3 auth
     fullName: string;
     bio?: string;
     profileImage?: string;
@@ -13,7 +20,6 @@ export interface IUser extends Document {
     nidNumber?: string;
     nidImageUrl?: string;
     selfieWithNidUrl?: string;
-    isKycVerified: boolean;
     warningCount: number;
     refreshToken?: string;
     status: 'pending' | 'active' | 'banned';
@@ -21,13 +27,16 @@ export interface IUser extends Document {
     generateRefreshToken(): string;
 }
 
+// --- Database Schema Definition ---
+
 const userSchema = new Schema<IUser>({
     walletAddress: {
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
         trim: true,
-        index: true
+        index: true // Optimized for high-speed lookups during wallet login
     },
     email: {
         type: String,
@@ -39,6 +48,7 @@ const userSchema = new Schema<IUser>({
     nonce: {
         type: String,
         required: true,
+        // Generates a random nonce to prevent replay attacks during signature verification
         default: () => Math.floor(Math.random() * 1000000).toString()
     },
     bio: {
@@ -64,7 +74,7 @@ const userSchema = new Schema<IUser>({
         type: String,
         required: function() {return this.role === 'user'},
         unique: true,
-        sparse: true,
+        sparse: true, // Allows multiple nulls while maintaining uniqueness for provided values
         trim: true
     },
     nidImageUrl: {
@@ -74,10 +84,6 @@ const userSchema = new Schema<IUser>({
     selfieWithNidUrl: {
         type: String,
         required: function() {return this.role === 'user'}
-    },
-    isKycVerified: {
-        type: Boolean,
-        default: false
     },
     warningCount: {
         type: Number,
@@ -93,6 +99,13 @@ const userSchema = new Schema<IUser>({
     },
 }, {timestamps: true});
 
+// --- Instance Methods (Auth) ---
+
+/**
+ * @method generateAccessToken
+ * @description Generates a short-lived JWT Access Token containing user identification and role permissions.
+ * @returns {string} Signed JWT Access Token
+ */
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
@@ -109,6 +122,11 @@ userSchema.methods.generateAccessToken = function () {
     );
 };
 
+/**
+ * @method generateRefreshToken
+ * @description Generates a long-lived JWT Refresh Token to allow users to renew access without re-authenticating.
+ * @returns {string} Signed JWT Refresh Token
+ */
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
