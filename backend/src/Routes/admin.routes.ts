@@ -8,11 +8,11 @@ const router = Router();
 
 router.use(verifyJWT)
 
-router.route("/add-new-admin").post(isOwner, addNewAdmin);
-router.route("/pending-users").get(isAdmin, getPendingUsers);
-router.route("/all-users").get(isAdmin, getAllUsers);
-router.route("/flagged-images").get(isAdmin, getFlaggedImages);
-router.route("/warn-user/:walletAddress").patch(isAdmin, warnUser);
+router.route("/admins").post(isOwner, addNewAdmin);
+router.route("/users/pending").get(isAdmin, getPendingUsers);
+router.route("/users").get(isAdmin, getAllUsers);
+router.route("/images/flagged").get(isAdmin, getFlaggedImages);
+router.route("/users/:walletAddress/warning").patch(isAdmin, warnUser);
 
 
 export default router;

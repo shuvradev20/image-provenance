@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
 import { Image } from "../Models/image.models.js";
 import { User } from "../Models/user.model.js";
-import { PROVENANCE_ABI, PROVENANCE_ADDRESS, RPC_URL } from "../config/contract.js";
+import config from "../config/config.js";
+import { PROVENANCE_ABI } from "../constants/abi.js";
 
 /**
  * @function listenEvents
@@ -12,8 +13,8 @@ import { PROVENANCE_ABI, PROVENANCE_ADDRESS, RPC_URL } from "../config/contract.
 export const listenEvents = async(): Promise<void> => {
     try {
         // Initialize connection to the blockchain node
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        const contract = new ethers.Contract(PROVENANCE_ADDRESS, PROVENANCE_ABI, provider);
+        const provider = new ethers.WebSocketProvider(config.wsUrl);
+        const contract = new ethers.Contract(config.provenanceAddress, PROVENANCE_ABI, provider);
 
         console.log("listener is live! Syncing raw data with mongoDB..");
 
@@ -243,17 +244,16 @@ export const listenEvents = async(): Promise<void> => {
         });
 
         provider.on("error", (error) => {
-            console.error("\n ⚠️ Listener crash koreche! Node er sathe jhamela:", error.message);
+            console.error("\n Listener crashed! Issue with the blockchain node:", error.message);
             
-            // 1. Purono sob connection ar event listener bad diye dao
+            // Remove all existing listeners to prevent memory leaks before reconnecting
             provider.removeAllListeners();
 
-            console.log("🔄 5 second por listener abar auto-restart nicche...");
+            console.log("Auto-restarting the listener in 5 seconds...");
 
-            // 2. 5 second por abar nije nijeke call kore fresh vabe start koro
             setTimeout(() => {
                 listenEvents();
-            }, 2000);
+            }, 5000);
         });
 
     } catch (error) {

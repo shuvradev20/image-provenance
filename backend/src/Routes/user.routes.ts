@@ -4,10 +4,10 @@ import { verifyJWT } from "../Middlewares/auth.middleware.js";
 import { upload } from "../Middlewares/multer.middleware.js";
 const router = Router();
 
-router.route("/current-user").get(verifyJWT, getCurrentUser);
-router.route("/profile/:walletAddress").get(getUserPublicProfile);
-router.route("/multiple-profiles").post(getUsersByWallets)
-router.route("/update-profile").patch(verifyJWT, upload.single("profileImage"), updateProfile)
+router.route("/me").get(verifyJWT, getCurrentUser);
+router.route("/me").patch(verifyJWT, upload.single("profileImage"), updateProfile)
+router.route("/batch").post(getUsersByWallets)
+router.route("/:walletAddress").get(getUserPublicProfile);
 
 
 export default router;

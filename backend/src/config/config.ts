@@ -14,7 +14,11 @@ const config = {
     pinataApiKey: process.env.PINATA_API_KEY || "",
     pinataSecretApiKey: process.env.PINATA_SECRET_API_KEY || "",
     pinataJwt: process.env.PINATA_JWT || "",
-    gatewayUrl: process.env.GATEWAY_URL || ""
+    gatewayUrl: process.env.GATEWAY_URL || "",
+
+    provenanceAddress: process.env.PROVENANCE_ADDRESS || "",
+    rpcUrl: process.env.RPC_URL || "",
+    wsUrl: process.env.WS_URL || ""
 };
 
 export default config;

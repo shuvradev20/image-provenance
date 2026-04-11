@@ -5,7 +5,7 @@ import { verifyJWT } from "../Middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/register").post(
+router.route("/users").post(
     upload.fields([
         {name: "nidImage", maxCount: 1},
         {name: "selfieWithNid", maxCount: 1}
@@ -14,8 +14,8 @@ router.route("/register").post(
 );
 
 router.route("/nonce/:walletAddress").get(getNonce);
-router.route("/login").post(verifySignature);
-router.route("/logout").post(verifyJWT, logoutUser);
-router.route("/refresh-token").post(refreshAccessToken);
+router.route("/session").post(verifySignature);
+router.route("/session").delete(verifyJWT, logoutUser);
+router.route("/session/refresh").post(refreshAccessToken);
 
 export default router;

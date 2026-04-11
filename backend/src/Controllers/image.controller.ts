@@ -7,7 +7,8 @@ import { type CustomRequest } from "../Middlewares/auth.middleware.js"
 import { Image } from "../Models/image.models.js"
 import fs from 'fs'
 import { ethers } from "ethers"
-import { PROVENANCE_ABI, PROVENANCE_ADDRESS, RPC_URL } from "../config/contract.js"
+import config from "../config/config.js"
+import { PROVENANCE_ABI } from "../constants/abi.js"
 
 // --- Interfaces ---
 
@@ -190,12 +191,12 @@ const verifyImageOnChain = asyncHandler(async (req: Request, res: Response) => {
 
         console.log(`\n Verifying hash strictly on Blockchain: ${imageHash}`)
 
-        console.log("RPC URL:", RPC_URL);
-        console.log("Contract Address:", PROVENANCE_ADDRESS);
+        console.log("RPC URL:", config.rpcUrl);
+        console.log("Contract Address:", config.provenanceAddress);
 
         // Initializing Ethers provider and contract instance for read-only query
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        const contract = new ethers.Contract(PROVENANCE_ADDRESS, PROVENANCE_ABI, provider)
+        const provider = new ethers.JsonRpcProvider(config.rpcUrl);
+        const contract = new ethers.Contract(config.provenanceAddress, PROVENANCE_ABI, provider)
 
         const imageData = await contract.getFunction("images")(imageHash);
 

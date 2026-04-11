@@ -13,6 +13,7 @@ import { Report } from "../Models/report.models.js";
  * @description Structure for reporting an image, including optional copyright proof.
  */
 interface IReportImageRequest {
+    hash: string;
     reportType: 'Copyright Violation' | 'Inappropriate Content' | 'Spam' | 'Other';
     proofHash?: string;
     reason: string;
@@ -36,10 +37,9 @@ interface IUpdateReportStatusRequest {
  */
 const reportImage = asyncHandler(async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
-    const { hash } = req.params;
 
     // Using Interface to strictly define body types
-    const { reportType, proofHash, reason } = req.body as IReportImageRequest
+    const {hash, reportType, proofHash, reason } = req.body as IReportImageRequest
 
     // Type Guard for URL parameters
     if(!customReq.user) {
@@ -146,7 +146,6 @@ const updateReportStatus = asyncHandler(async (req: Request, res: Response) => {
         new ApiResponse(200, report, `Report status updated to ${status}`)
     )
 })
-
 
 
 export {
