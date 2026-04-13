@@ -62,7 +62,7 @@ import reportRouter from './Routes/report.routes.js';
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/admin", adminRouter);
-app.use("/api/v1/image", imageRouter);
+app.use("/api/v1/images", imageRouter);
 app.use("/api/v1/reports", reportRouter);
 
 
