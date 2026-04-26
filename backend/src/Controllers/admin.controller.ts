@@ -99,6 +99,8 @@ const getFlaggedImages = asyncHandler(async (req: Request, res: Response) => {
  * @route PATCH /api/v1/admin/warn-user/:walletAddress
  * @description Issues a formal warning to a user. 
  * Automatically flags the user for a blockchain ban if warning count reaches 3.
+ * 
+ * **should warn automatically
  */
 const warnUser = asyncHandler(async (req: Request, res: Response) => {
     const { walletAddress } = req.params;

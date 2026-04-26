@@ -8,7 +8,7 @@ const wallet = new ethers.Wallet(privateKey);
 
 console.log("Test Wallet Address:", wallet.address);
 
-const nonce = "222033";
+const nonce = "662222";
 
 async function generateSignature() {
     const signature = await wallet.signMessage(nonce);

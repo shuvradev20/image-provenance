@@ -232,6 +232,7 @@ contract ImageProvenance {
   function transferImage(bytes32 _hash, address _to) external {
       require(images[_hash].owner == msg.sender, "You are not the owner of this image");
       require(isUserRegistered[_to], "Recipient is not a registered user");
+    //   require(_to != msg.sender, "Cannot transfer to yourself");
       require(_to != address(0), "Cannot transfer to zero address");
       require(!images[_hash].isTampered, "Cannot transfer a tempered/flagged image");
       require(!images[_hash].isBurned, "Cannot transfer a burned image");
