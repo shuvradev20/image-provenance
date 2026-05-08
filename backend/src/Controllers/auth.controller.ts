@@ -9,35 +9,31 @@ import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../config/config.js";
 
-/**
- * @interface IRegisterUser
- * @description Defines the expected payload structure for new user registration..
- */
-interface IRegisterUser {
-    fullName: string;
+
+//---Token GeneratorHelper---
+
+interface IGoogleAuth {
     email: string;
-    walletAddress: string;
-    nidNumber: string;
+    fullName: string;
+    googleId: string;
 }
 
-/**
- * @interface IVerifySignature
- * @description Defines the expected payload structure for the Web3 login process.
- * Ensures both the wallet address and the cryptographic signature are provided by the client.
- */
-interface IVerifySignature {
+interface ILinkWallet {
     walletAddress: string;
     signature: string;
 }
 
-/**
- * @interface IRefreshToken
- * @description Structure for the refresh token request body. 
- * The token is marked as optional (?) because it is primarily extracted from secure HTTP-only cookies.
- */
-interface IRefreshToken {
-    refreshToken?: string;
+interface IWalletLogin {
+    walletAddress: string;
+    signature: string;
 }
+
+interface ISubmitKyc {
+    nidNumber: string;
+    // Note: multer er file gulo req.files e ashe, req.body te na. 
+    // Tai interface e sudhu nidNumber thakbe.
+}
+
 
 // --- Internal Auth Utilities ---
 
@@ -69,160 +65,263 @@ const generateAccessTokenAndRefreshTokens = async (userId: any) => {
     }
 }
 
-// --- User Registration & Identity ---
+const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+}
+
+//---Google Auth---
 
 /**
- * @route POST /api/v1/auth/register
- * @description Registers a new user with identity verification.
- * We store images on Cloudinary and the resulting URLs in MongoDB.
+ * @route POST /api/v1/auth/google
+ * @description Handles both Sign Up and Sign In via Google.
  */
-const registerUser = asyncHandler(async (req: Request, res: Response) => {
-    const {fullName, email, walletAddress, nidNumber} = req.body as IRegisterUser;
+const googleAuth = asyncHandler(async (req: Request, res: Response) => {
+    const {email, fullName, googleId} = req.body as IGoogleAuth;
 
-    if(!fullName || !email || !walletAddress || !nidNumber) {
-        throw new ApiError(400, "All fields (fullName, email, walletAddress, nidNumber) are required")
+    if(!email || !fullName || !googleId) {
+        throw new ApiError(400, "Email, fullName and Google ID are Required");
     }
 
-    // Check for existing users to maintain data integrity
-    const existedUser = await User.findOne({
-        $or: [{email},{nidNumber}, {walletAddress: walletAddress.toLowerCase()}]
-    })
+    let user = await User.findOne({email: email.toLowerCase()});
 
-    if(existedUser) {
-        throw new ApiError(409, "User with this email or wallet address or nidNumber already exists");
+    if(!user) {
+        user = await User.create({
+            email: email.toLowerCase(),
+            fullName,
+            googleId,
+            kycStatus: 'unverified',
+            isBlockchainRegistered: false
+        })
     }
 
-    // const files = req.files
-    const files = req.files as {[fieldname: string]: Express.Multer.File[]}
+    const {accessToken, refreshToken} = await generateAccessTokenAndRefreshTokens(user._id);
 
-    const nidImageLocalPath = files?.nidImage?.[0]?.path;
-    const selfieLocalPath = files?.selfieWithNid?.[0]?.path;
+    const loggedInUser = await User.findById(user._id).select("-refreshToken -nonce");
 
-    if(!nidImageLocalPath || !selfieLocalPath) {
-        throw new ApiError(400, "Nid and selfie images are required")
+    return res.status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(200, {user: loggedInUser, accessToken}, "Google Authentication Successful")
+        );
+});
+
+/**
+ * @route POST /api/v1/auth/link-wallet
+ * @description Protected route. Links a MetaMask wallet to the currently logged-in Google user.
+ */
+const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
+    const {walletAddress, signature} = req.body as ILinkWallet;
+    const userId = req.user?._id;
+
+    if(!walletAddress || !signature) {
+        throw new ApiError(400, "Wallet address and signature are required");
     }
 
-    const nidImage = await uploadOnCloudinary(nidImageLocalPath)
-    const selfie = await uploadOnCloudinary(selfieLocalPath)
+    const user = await User.findById(userId);
 
-    if (!nidImage || !selfie) {
-        throw new ApiError(500, "Failed to upload images to cloudinary")
+    if(!user) {
+        throw new ApiError(404, "User not found");
     }
 
-    const createdUser = await User.create({
-        fullName,
-        email,
-        nidNumber,
-        walletAddress: walletAddress.toLowerCase(),
-        nidImageUrl: nidImage.url,
-        selfieWithNidUrl: selfie.url
-    })
+    if(user.walletAddress) {
+        throw new ApiError(400, "A wallet is already linked to this account")
+    }
 
-    return res.status(201).json(
-        new ApiResponse(201, createdUser, "User registered successfully")
-    )
-})
+    const walletExists = await User.findOne({ walletAddress: walletAddress.toLowerCase()});
+    if(walletExists) {
+        throw new ApiError(409, "This wallet is already linked to another account");
+    }
 
-// --- Web3 Authentication ---
+    try {
+        const message = `Link wallet to ProveNode account: ${user.email}`;
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+
+        if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+            throw new ApiError(401, "Invalid Signature! You don't own this wallet.");
+        }
+
+        user.walletAddress = walletAddress.toLowerCase();
+        user.nonce = Math.floor(Math.random() * 1000000).toString();
+        await user.save({ validateBeforeSave: false})
+
+        return res.status(200).json(
+            new ApiResponse(200, { walletAddress: user.walletAddress }, "Wallet linked successfully")
+        )
+    } catch (error) {
+        throw new ApiError(400, "Signature verification failed");
+    }
+});
 
 /**
  * @route GET /api/v1/auth/nonce/:walletAddress
- * @description Fetches a user's unique nonce for Web3 signature verification.
- * Nonce is essential to prevent replay attacks during the login process.
+ * @description Gets nonce for wallet login. Fails if wallet is not registered.
  */
 const getNonce = asyncHandler(async (req: Request, res: Response) => {
-    const {walletAddress} = req.params;
+    const { walletAddress } = req.params;
 
-    if(!walletAddress|| typeof walletAddress !== 'string') {
-        throw new ApiError(400, "Wallet address is required");
+    if (!walletAddress || typeof walletAddress !== 'string') {
+        throw new ApiError(400, "Wallet address is required and must be a string");
     }
 
-    const user = await User.findOne({walletAddress: walletAddress.toLowerCase()})
-
-    if (!user) {
-        throw new ApiError(404, "User not found. Please register first")
+    const user = await User.findOne({ walletAddress: walletAddress.toLowerCase()});
+    if(!user) {
+        throw new ApiError(404, "No account found with this wallet. Please 'continue with Google' to sign in")
     }
 
     return res.status(200).json(
         new ApiResponse(200, {nonce: user.nonce}, "Nonce fetched successfully")
-    )
-})
+    );
+});
 
 /**
- * @route POST /api/v1/auth/verify-signature
- * @description Cryptographically verifies the wallet signature against the stored nonce.
- * If valid, it initiates a session by issuing JWT access and refresh tokens.
+ * @route POST /api/v1/auth/wallet-login
+ * @description Logs in a returning user via MetaMask signature.
  */
-const verifySignature = asyncHandler(async (req: Request, res: Response) => {
-    const {walletAddress, signature} = req.body as IVerifySignature ;
-
-    if (!walletAddress || !signature) {
+const walletLogin = asyncHandler(async (req: Request, res: Response) => {
+    const {walletAddress, signature} = req.body as IWalletLogin;
+    
+    if(!walletAddress || !signature) {
         throw new ApiError(400, "Wallet address and signature are required")
     }
 
-    const user = await User.findOne({ walletAddress: walletAddress.toLowerCase() })
-
+    const user = await User.findOne({walletAddress: walletAddress.toLowerCase()});
     if(!user) {
-        throw new ApiError(404, "User not found")
-    } 
-
-    if (user.status === 'pending') {
-        throw new ApiError(403, "Your account is currently pending. Please complete the blockchain registration or wait for approval.");
-    }
-
-    if (user.status === 'banned') {
-        throw new ApiError(403, "Access denied. Your account has been banned from this platform.");
+        throw new ApiError(404, "User not found. Please log in with Google.");
     }
 
     try {
-        // Recover the address from the signature using the user's nonce as the message
-        const recoveredAddress = ethers.verifyMessage(user.nonce, signature)
-
-        if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()){
-            throw new ApiError(401, "Invalid SIgnature! Hacker detected!")
+        const recoveredAddress = ethers.verifyMessage(user.nonce as string, signature);
+        if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+            throw new ApiError(401, "Invalid Signature!")
         }
 
-        // IMPORTANT: Change nonce after every successful login to prevent replay attacks
-        user.nonce = Math.floor(Math.random() * 1000000).toString()
-        await user.save({ validateBeforeSave: false});
+        user.nonce = Math.floor(Math.random() * 1000000).toString();
+        await user.save({validateBeforeSave: false});
 
         const {accessToken, refreshToken} = await generateAccessTokenAndRefreshTokens(user._id);
-
-        const options = {
-            httpOnly: true, // Prevents XSS by making cookies inaccessible to client-side JS
-            secure: true // Ensures cookies are only sent over HTTPS
-        }
-
-        const loggedInUser = await User.findById(user._id).select("-refreshToken -nonce")
+        const loggedInUser = await User.findById(user._id).select("-refreshToken -nonce");
 
         return res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(200, {user: loggedInUser, accessToken}, "web3 login successful!")
+        )
+    } catch (error) {
+        throw new ApiError(400, "Invalid signature format");
+    }
+});
+
+/**
+ * @route POST /api/v1/auth/submit-kyc
+ * @description Protected route. Uploads NID and Selfie, updates status to pending.
+ */
+const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
+    const {nidNumber} = req.body as ISubmitKyc;
+    const userId = req.user?._id;
+
+    if(!nidNumber) {
+        throw new ApiError(400, "NID Number is required");
+    }
+
+    const user = await User.findById(userId);
+    if(!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if(!user.walletAddress) {
+        throw new ApiError(403, "Please link your wallet before submitting KYC");
+    }
+    
+    if(user.kycStatus === 'pending' || user.kycStatus === 'verified') {
+        throw new ApiError(400, `KYC is already ${user.kycStatus}`)
+    }
+
+    const nidExists = await User.findOne({nidNumber});
+    if(nidExists) {
+        throw new ApiError(409, "This NID is already registered to another account");
+    }
+
+    const files = req.files as {[fieldname: string]: Express.Multer.File[]};
+    const nidImageLocalPath = files?.nidImage?.[0]?.path;
+    const selfieLocalPath = files?.selfieWithNid?.[0]?.path;
+
+    if(!nidImageLocalPath || !selfieLocalPath) {
+        throw new ApiError(400, "NID and Selfie images are required");
+    }
+
+    const nidImage = await uploadOnCloudinary(nidImageLocalPath);
+    const selfie = await uploadOnCloudinary(selfieLocalPath);
+
+    if(!nidImage || !selfie) {
+        throw new ApiError(500, "Failed to upload images to Cloudinary");
+    }
+
+    user.nidNumber = nidNumber;
+    user.nidImageUrl = nidImage.url;
+    user.selfieWithNidUrl = selfie.url;
+    user.kycStatus = 'pending';
+
+    await user.save({validateBeforeSave: false});
+
+    return res.status(200).json(
+        new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
+    )
+});
+
+/**
+ * @route POST /api/v1/auth/refresh-token
+ * @description Rotates the refresh token and issues a new access token to maintain the session seamlessly.
+ */
+const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if(!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request. No refresh token provided.");
+    }
+
+    try {
+        const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            config.refreshTokenSecret
+        ) as JwtPayload
+
+        const user = await User.findById(decodedToken?._id);
+        if(!user) {
+            throw new ApiError(401, "Invalid refresh token. user not found")
+        }
+
+        if(incomingRefreshToken !== user?.refreshToken) {
+            throw new ApiError(401, "Refresh token is expired or has been used.");
+        }
+
+        const {accessToken, refreshToken: newRefreshToken} = await generateAccessTokenAndRefreshTokens(user._id);
+
+        return res.status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", newRefreshToken, cookieOptions)
         .json(
             new ApiResponse(
                 200,
-                {
-                    user: loggedInUser,
-                    accessToken,
-                    refreshToken
-                }, "Web3 login successful!")
-        )
+                {accessToken, refreshToken: newRefreshToken},
+                "Access token refreshed successfully"
+            )
+        );
+        
     } catch (error) {
-        throw new ApiError(400, "Invalid signature format")
+        throw new ApiError(401, "Invalid or expired refresh token")
     }
-})
-
-// --- Session Management ---
+});
 
 /**
  * @route POST /api/v1/auth/logout
- * @description Clears the user's session by unsetting the refresh token in the DB and clearing cookies.
+ * @description Clears the user's session by unsetting the refresh token in the DB and clearing browser cookies.
  */
-const logoutUser = asyncHandler(async (req: Request, res: Response) => {
-    const customReq = req as CustomRequest;
-
+const logoutUser = asyncHandler(async (req: CustomRequest, res: Response) => {
     await User.findByIdAndUpdate(
-        customReq.user?._id,
+        req.user?._id,
         {
             $unset: {
                 refreshToken: 1
@@ -231,81 +330,24 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
         {
             new: true
         }
-    )
-
-    const options = {
-        httpOnly: true,
-        secure: true
-    }
+    );
 
     return res.status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .json(
         new ApiResponse(200, {}, "User logged out successfully")
     )
-})
+});
 
-/**
- * @route POST /api/v1/auth/refresh-token
- * @description Rotates the refresh token and issues a new access token to maintain the session.
- */
-const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
-    const cookies = req.cookies as IRefreshToken;
-    const body = req.body as IRefreshToken;
-
-    const incomingRefreshToken = cookies.refreshToken || body.refreshToken;
-
-    if(!incomingRefreshToken) {
-        throw new ApiError(401, "Unauthorized request")
-    }
-
-    try {
-        const decodedToken = jwt.verify(
-            incomingRefreshToken, config.refreshTokenSecret
-        ) as JwtPayload
-
-        const user = await User.findById(decodedToken?._id)
-
-        if(!user) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
-
-        if (incomingRefreshToken !== user?.refreshToken) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
-
-        const options = {
-            httpOnly: true,
-            secure: true
-        }
-
-        const accessToken = user.generateAccessToken();
-        const newRefreshToken = user.generateRefreshToken();
-
-        user.refreshToken = newRefreshToken;
-        await user.save({ validateBeforeSave: false })
-
-        return res.status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
-        .json(
-            new ApiResponse(
-                200,
-                {accessToken, refreshToken: newRefreshToken},
-                "Access token refreshed successfully"
-            )
-        )
-    } catch (error) {
-        throw new ApiError(401, "Invalid refresh token")
-    }
-})
 
 
 export {
-    registerUser,
+    googleAuth,
+    linkWallet,
     getNonce,
-    verifySignature,
-    logoutUser,
-    refreshAccessToken
+    walletLogin,
+    submitKyc,
+    refreshAccessToken,
+    logoutUser
 }

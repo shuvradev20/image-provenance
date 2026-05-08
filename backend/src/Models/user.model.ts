@@ -10,19 +10,20 @@ import config from "../config/config.js"
  * Supports a hybrid authentication model (Web3 Wallet + Traditional Identity).
  */
 export interface IUser extends Document {
-    walletAddress: string;
-    email: string;
-    nonce: string; // Used for cryptographically signing messages in Web3 auth
     fullName: string;
+    email: string;
+    googleId?: string;
+    walletAddress?: string;
+    nonce?: string; // Used for cryptographically signing messages in Web3 auth
     bio?: string;
     profileImage?: string;
-    role: 'user' | 'admin' | 'owner'
     nidNumber?: string;
     nidImageUrl?: string;
     selfieWithNidUrl?: string;
-    warningCount: number;
+    role: 'user' | 'admin'
+    kycStatus: 'unverified' | 'pending' | 'verified';
+    isBlockchainRegistered: boolean; // Becomes true after admin calls Smart Contract
     refreshToken?: string;
-    status: 'pending' | 'active' | 'banned';
     generateAccessToken(): string;
     generateRefreshToken(): string;
 }
@@ -30,13 +31,10 @@ export interface IUser extends Document {
 // --- Database Schema Definition ---
 
 const userSchema = new Schema<IUser>({
-    walletAddress: {
+     fullName: {
         type: String,
         required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-        index: true // Optimized for high-speed lookups during wallet login
+        trim: true
     },
     email: {
         type: String,
@@ -45,21 +43,39 @@ const userSchema = new Schema<IUser>({
         lowercase: true,
         trim: true
     },
+    googleId: {
+        type: String, 
+        sparse: true, 
+        unique: true
+    },
+    walletAddress: {
+        type: String,
+        sparse: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        index: true
+    },
+    
     nonce: {
         type: String,
-        required: true,
-        // Generates a random nonce to prevent replay attacks during signature verification
-        default: () => Math.floor(Math.random() * 1000000).toString()
+    },
+    nidNumber: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows multiple nulls while maintaining uniqueness for provided values
+        trim: true
+    },
+    nidImageUrl: {
+        type: String
+    },
+    selfieWithNidUrl: {
+        type: String,
     },
     bio: {
         type: String,
         trim: true,
         maxLength: 250
-    },
-    fullName: {
-        type: String,
-        required: true,
-        trim: true
     },
     profileImage: {
         type: String,
@@ -67,35 +83,20 @@ const userSchema = new Schema<IUser>({
     },
     role: {
         type: String,
-        enum: ['user', 'admin', 'owner'],
+        enum: ['user', 'admin'],
         default: 'user'
     },
-    nidNumber: {
-        type: String,
-        required: function() {return this.role === 'user'},
-        unique: true,
-        sparse: true, // Allows multiple nulls while maintaining uniqueness for provided values
-        trim: true
+    kycStatus: { 
+        type: String, 
+        enum: ['unverified', 'pending', 'verified'], 
+        default: 'unverified' // Default is unverified at Step 1
     },
-    nidImageUrl: {
-        type: String,
-        required: function() {return this.role === 'user'}
-    },
-    selfieWithNidUrl: {
-        type: String,
-        required: function() {return this.role === 'user'}
-    },
-    warningCount: {
-        type: Number,
-        default: 0,
+    isBlockchainRegistered: { 
+        type: Boolean, 
+        default: false 
     },
     refreshToken: {
         type: String
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'active', 'banned'],
-        default: 'pending'
     },
 }, {timestamps: true});
 
@@ -106,7 +107,7 @@ const userSchema = new Schema<IUser>({
  * @description Generates a short-lived JWT Access Token containing user identification and role permissions.
  * @returns {string} Signed JWT Access Token
  */
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function (): string {
     return jwt.sign(
         {
             _id: this._id,
@@ -127,7 +128,7 @@ userSchema.methods.generateAccessToken = function () {
  * @description Generates a long-lived JWT Refresh Token to allow users to renew access without re-authenticating.
  * @returns {string} Signed JWT Refresh Token
  */
-userSchema.methods.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = function (): string {
     return jwt.sign(
         {
             _id: this._id,
