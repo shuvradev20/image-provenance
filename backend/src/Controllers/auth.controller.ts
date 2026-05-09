@@ -3,7 +3,7 @@ import { asyncHandler } from "../Utils/asyncHandler.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../Utils/cloudinary.js";
-import { User } from "../Models/user.model.js";
+import { User } from "../Models/user.models.js";
 import { ethers } from "ethers";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";

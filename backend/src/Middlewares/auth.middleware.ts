@@ -2,7 +2,7 @@ import { type Request, type Response, type NextFunction } from "express";
 import { ApiError } from "../Utils/ApiError.js";
 import { asyncHandler } from "../Utils/asyncHandler.js";
 import jwt, { type JwtPayload } from "jsonwebtoken"
-import { User, type IUser } from "../Models/user.model.js";
+import { User, type IUser } from "../Models/user.models.js";
 import config from "../config/config.js";
 
 /**
