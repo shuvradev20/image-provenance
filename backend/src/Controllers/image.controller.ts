@@ -50,9 +50,9 @@ interface IConfirmMintPayload {
  * and returns the exact payload needed for the MetaMask transaction.
  */
 const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Response) => {
-    const customRes = req as CustomRequest;
+    const customReq = req as CustomRequest;
 
-    if(!customRes.user) {
+    if(!customReq.user) {
         throw new ApiError(401, "Unauthorized request. user missing.");
     }
 
