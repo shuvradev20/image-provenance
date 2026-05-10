@@ -1,242 +1,445 @@
-import { type Request, type Response } from "express"
-import { asyncHandler } from "../Utils/asyncHandler.js"
-import { ApiError } from "../Utils/ApiError.js"
-import { ApiResponse } from "../Utils/ApiResponse.js"
-import { uploadImageToPinata, uploadMetadataToPinata } from "../Utils/pinata.js"
-import { type CustomRequest } from "../Middlewares/auth.middleware.js"
-import { Image } from "../Models/image.models.js"
-import fs from 'fs'
-import { ethers } from "ethers"
-import config from "../config/config.js"
-import { PROVENANCE_ABI } from "../constants/abi.js"
+import { type Request, type Response } from "express";
+import { asyncHandler } from "../Utils/asyncHandler.js";
+import { ApiError } from "../Utils/ApiError.js";
+import { ApiResponse } from "../Utils/ApiResponse.js";
+import { uploadImageBufferToPinata, uploadMetadataToPinata } from "../Utils/pinata.js";
+import { uploadBufferOnCloudinary } from "../Utils/cloudinary.js";
+import { type CustomRequest } from "../Middlewares/auth.middleware.js";
+import { Image } from "../Models/image.models.js";
+import { ethers } from "ethers";
+import axios from "axios";
+import FormData from "form-data";
+import crypto from "crypto";
+import fs from "fs/promises";
+import path from "path";
+import config from "../config/config.js";
 
-// --- Interfaces ---
 
-/**
- * @interface IUploadImage
- * @description Structure for the text data (title, description) coming from the frontend form.
- */
 interface IUploadImage {
     title: string;
     description: string;
+    assetCategory: string;
+    tags?: string;
 }
 
-/**
- * @interface IImageHashParams
- * @description Defines the expected URL parameter when fetching details of a specific image.
- */
-interface IImageHashParams {
-    hash?: string;
+interface IConfirmMintPayload {
+    title: string;
+    description: string;
+    assetCategory: string;
+    tags: string[];
+    fileDetails: {
+        fileType: string;
+        fileSize: number;
+        width: number;
+        height: number;
+    };
+    imageHash: string;
+    watermarkID: string;
+    imageCID: string;
+    metadataCID: string;
+    thumbnailUrl: string;
+    transactionHash: string;
+    originalAssetHash: string;
 }
 
-// --- Image Provenance Logic ---
+
 
 /**
- * @route POST /api/v1/images/register
- * @description Generates cryptographic hash, uploads assets to IPFS, and prepares data for on-chain registration.
- * This is the 'Pre-mint' phase where metadata is secured off-chain.
+ * @route POST /api/v1/images/register-pre-mint
+ * @description Processes image, injects watermark, uploads to Cloudinary & IPFS, 
+ * and returns the exact payload needed for the MetaMask transaction.
  */
 const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Response) => {
+    const customRes = req as CustomRequest;
+
+    if(!customRes.user) {
+        throw new ApiError(401, "Unauthorized request. user missing.");
+    }
+
+    const {title, description, assetCategory, tags} = req.body as IUploadImage;
+
+    if(!title || !description || !assetCategory) {
+        throw new ApiError(400, "Title, description, and assetCategory are required.");
+    }
+
+    if(!req.file || !req.file.buffer) {
+        throw new ApiError(400, "Image file is required and must be in memory buffer");
+    }
+
+    const rawUint8Array = new Uint8Array(req.file.buffer);
+    const originalAssetHash = ethers.keccak256(rawUint8Array);
+
+    const existedOriginalImage = await Image.findOne({originalAssetHash: originalAssetHash});
+
+    if(existedOriginalImage) {
+        throw new ApiError(409, "Plagiarism Detected: This exact original image already registered on ProveNode.");
+    }
+
+    console.log(`Starting Fast-Track Provenance Pipeline for: ${title}`);
+
+    const parsedTags = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()) : [];
+    const fileDetails = {
+        fileType: req.file.mimetype,
+        fileSize: req.file.size, 
+        width: 0,
+        height: 0
+    }
+
+    const watermarkID = crypto.randomBytes(16).toString('hex')
+    console.log(`Generated DNA: ${watermarkID}`);
+
+    const form = new FormData();
+    form.append('image', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+    });
+    form.append('watermark_id', watermarkID);
+
+    let watermarkedImageBuffer: Buffer;
+    try {
+        console.log("Injecting DNA via Python Microservice...");
+        const pythonResponse = await axios.post('http://127.0.0.1:8000/embed-watermark', form, {
+            headers: { ...form.getHeaders()},
+            responseType: "arraybuffer"
+        });
+        watermarkedImageBuffer = pythonResponse.data;
+    } catch (error) {
+        console.error("Python Error:", error);
+        throw new ApiError(500, "Failed to inject invisible watermark via Python Engine.");
+    }
+
+    console.log("Generating Keccak256 Hash...");
+    const uint8ArrayData = new Uint8Array(watermarkedImageBuffer);
+    const imageHash = ethers.keccak256(uint8ArrayData);
+
+    const existedImage = await Image.findOne({imageHash});
+    if (existedImage) {
+        throw new ApiError(409, "This exact modified asset is already registered in the system.");
+    }
+
+    console.log("Uploading to Cloudinary (Web2) & Pinata (Web3)...");
+
+    const cloudinaryResponse = await uploadBufferOnCloudinary(watermarkedImageBuffer) as any;
+    if (!cloudinaryResponse?.secure_url) {
+        throw new ApiError(500, "Failed to generate UI thumbnail via Cloudinary.");
+    }
+
+    const thumbnailUrl = cloudinaryResponse.secure_url;
+
+    fileDetails.width = cloudinaryResponse.width;
+    fileDetails.height = cloudinaryResponse.height;
+
+    const tempDir = path.join(process.cwd(), 'public', 'temp');
+    await fs.mkdir(tempDir, { recursive: true });
+
+    const tempFilePath = path.join(tempDir, `watermarked_${Date.now()}.png`);
+    await fs.writeFile(tempFilePath, watermarkedImageBuffer);
+
+    let imageCID, metadataCID;
+    try {
+        imageCID = await uploadImageBufferToPinata(
+            watermarkedImageBuffer, 
+            req.file.originalname, 
+            req.file.mimetype
+        );
+
+        if (!imageCID){
+            throw new ApiError(500, "Failed to upload raw image to IPFS.");
+        }
+
+        metadataCID = await uploadMetadataToPinata(
+            title, 
+            description, 
+            imageCID,
+            assetCategory,
+            parsedTags,
+            fileDetails, 
+            watermarkID,
+            imageHash
+        );
+
+        if (!metadataCID) {
+            throw new ApiError(500, "Failed to upload JSON metadata to IPFS.");
+        }
+    } finally {
+        try {
+            await fs.unlink(tempFilePath);
+        } catch (cleanupErr) {
+            console.error("Temp file cleanup failed:", cleanupErr);
+        }
+    };
+
+    console.log("Pipeline Complete! Dispatching Payload to Frontend.");
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            imageHash, 
+            watermarkID, 
+            metadataCID,
+            thumbnailUrl,
+            ipfsImageUrl: `https://gateway.pinata.cloud/ipfs/${imageCID}`,
+            preparedData: {
+                title, 
+                description,
+                assetCategory,
+                tags: parsedTags,
+                fileDetails,
+                originalAssetHash
+            }
+        }, "Pre-Mint preparation successful! Ready for MetaMask signature.")
+    )
+});
+
+/**
+ * @route POST /api/v1/images/confirm-mint
+ * @description Saves the finalized image data to MongoDB AFTER a successful blockchain transaction.
+ */
+const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
 
     if(!customReq.user) {
-        throw new ApiError(401, "Unauthorized request. user missing")
+        throw new ApiError(401, "Unauthorized request. User missing");
     }
 
-    const { title, description } = req.body as IUploadImage
+    const {title, description, assetCategory, tags, fileDetails, imageHash, watermarkID, imageCID, metadataCID, thumbnailUrl, transactionHash, originalAssetHash} = req.body as IConfirmMintPayload
 
-    if(!title || !description) {
-        throw new ApiError(400, "Title and description are required")
+    if(!transactionHash || !imageHash || !watermarkID || !metadataCID || !thumbnailUrl) {
+        throw new ApiError(400, "Missing critical blockchain or IPFS data for final registration.");
     }
 
-    const localFilePath = req.file?.path
-    if(!localFilePath) {
-        throw new ApiError(400, "Image file is required")
+    const existingTx = await Image.findOne({transactionHash});
+    if(existingTx) {
+        throw new ApiError(409, "This transaction has already been recorded.");
     }
 
-    // Generate unique cryptographic hash for the image to ensure integrity
-    const fileBuffer = fs.readFileSync(localFilePath)
-    const imageHash = ethers.keccak256(fileBuffer);
+    const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
-    // Check if this image already exists in our record
-    const existedImage = await Image.findOne({ imageHash });
-    if (existedImage) {
-        fs.unlinkSync(localFilePath);
-        throw new ApiError(409, "This exact image has already been registered in the system")
+    try {
+        const receipt = await provider.getTransactionReceipt(transactionHash);
+
+        if(!receipt) {
+            throw new ApiError(404, "Transaction receipt not found on local node. try again");
+        }
+
+        if(receipt.status !== 1) {
+            throw new ApiError(400, "On-chain transaction failed. Cannot register.");
+        }
+
+        if (receipt.from.toLowerCase() !== customReq.user.walletAddress?.toLowerCase()) {
+            throw new ApiError(401, "Fraud detected! Transaction sender mismatch.");
+        }
+
+        if (receipt.to?.toLowerCase() !== config.contractAddress.toLowerCase()) {
+            throw new ApiError(400, "Transaction was sent to a different contract.");
+        }
+
+        const contractABI = ["event ImageRegistered(address indexed creator, bytes32 indexed hash, bytes32 watermarkID, string metadataCID)"];
+        const iface = new ethers.Interface(contractABI);
+
+        let isDataAuthentic = false;
+
+        for (const log of receipt.logs) {
+            try {
+                const decodedLog = iface.parseLog({ topics: log.topics as string[], data: log.data });
+                
+                if (decodedLog && decodedLog.name === "ImageRegistered") {
+                    const onChainHash = decodedLog.args.hash.toLowerCase();
+                    const onChainWatermark = decodedLog.args.watermarkID.toLowerCase();
+                    
+                    if (onChainHash === imageHash.toLowerCase() && onChainWatermark === watermarkID.toLowerCase()) {
+                        isDataAuthentic = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                continue;
+            };
+        };
+
+        if (!isDataAuthentic) {
+            throw new ApiError(400, "Payload Manipulation Detected! The provided hash does not match the blockchain transaction.");
+        };
+    } catch (error) {
+        throw new ApiError(500, "Blockchain communication failed during verification.");
     }
 
-    // Upload image and metadata to IPFS via Pinata
-    const imageCID = await uploadImageToPinata(localFilePath);
-    if(!imageCID) {
-        throw new ApiError(500, "Failed to upload image to IPFS network");
-    }
+    console.log(`Verifying and saving asset to DB. TxHash: ${transactionHash}`);
 
-    const metadataCID = await uploadMetadataToPinata(title, description, imageCID);
-    if(!metadataCID) {
-        throw new ApiError(500, "failed to upload metadata to IPFS network");
-    }
-
-    const savedImage = await Image.create({
+    const newImage = await Image.create({
+        uploader: customReq.user._id,
+        currentOwner: customReq.user.walletAddress!,
         title,
         description,
+        assetCategory,
+        tags,
+        fileDetails,
         imageHash,
+        watermarkID,
         imageCID,
         metadataCID,
-        uploader: customReq.user._id,
-        currentOwner: customReq.user.walletAddress,
-        walletAddress: customReq.user.walletAddress
-    })
+        thumbnailUrl,
+        originalAssetHash,
+        transactionHash,
+        status: 'verified'
+    });
 
     return res.status(201).json(
         new ApiResponse(201, {
-            dbId: savedImage._id,
-            imageHash,
-            metadataCID,
-            imageCID,
-            ipfsImageUrl: `https://gateway.pinata.cloud/ipfs/${imageCID}`,
-            ipfsMetadataUrl: `https://gateway.pinata.cloud/ipfs/${metadataCID}`
-        }, "Provenance data generated successfully. Ready for Metamask transaction")
+            imageId: newImage._id,
+            transactionHash: newImage.transactionHash,
+            exploreLink: `/asset/${newImage.imageHash}`
+        }, "Asset fully registered on ProveNode Blockchain & Database.")
     )
-})
-
-// --- Data Retrieval ---
+});
 
 /**
- * @route GET /api/v1/images/all-images
- * @description Fetches all verified and active images with uploader details.
+ * @route GET /api/v1/images/explore
+ * @description Public API for dashboard cards. Returns ONLY essential Web2 data for fast loading.
+ * Implements Pagination and ensures burned images are excluded.
  */
 const getAllImages = asyncHandler(async (req: Request, res: Response) => {
-    const images = await Image.find({
-        status: { $in: ['verified', 'flagged'] },
-        isBurned: false
-    })
-    .sort({createdAt: -1})
-    .populate("uploader", "fullName walletAddress")
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 24, 48); 
+    const skip = (page - 1) * limit;
 
-    if(!images || images.length === 0) {
-        throw new ApiError(404, "No verified images found in the system")
+    const baseQuery = { status: 'verified', isBurned: false };
+
+    const [totalImages, images] = await Promise.all([
+        Image.countDocuments(baseQuery),
+        Image.find(baseQuery)
+            .select('title currentOwner assetCategory thumbnailUrl imageHash createdAt')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+    ]);
+
+    const totalPages = Math.ceil(totalImages / limit);
+    
+    const paginationData = {
+        totalImages,
+        totalPages,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages
+    };
+
+    if (!images || images.length === 0) {
+        return res.status(200).json(
+            new ApiResponse(200, { images: [], pagination: paginationData }, "No verified images found yet.")
+        );
     }
 
     return res.status(200).json(
-        new ApiResponse(200, images, "All verified images fetched successfully")
-    )
-})
+        new ApiResponse(200, { images, pagination: paginationData }, "Explore feed fetched successfully.")
+    );
+});
 
 /**
- * @route GET /api/v1/images/my-images
- * @description Retrieves images uploaded by the authenticated user.
+ * @route GET /api/v1/images/my-assets
+ * @description Returns ONLY essential card data for the user's dashboard.
  */
 const getMyImages = asyncHandler(async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
 
-    if(!customReq.user) {
-        throw new ApiError(401, "Unauthorized request. User missing")
+    if (!customReq.user) {
+        throw new ApiError(401, "Unauthorized request.");
     }
 
-    const myImages = await Image.find(
-        { 
-            uploader: customReq.user._id
-        })
-        .sort({
-            createdAt: -1
-        }
-    )
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 12, 24); 
+    const skip = (page - 1) * limit;
+
+    const myWallet = customReq.user.walletAddress!;
+
+    const baseQuery = { currentOwner: myWallet, status: 'verified' };
+
+    const [totalImages, myImages] = await Promise.all([
+        Image.countDocuments(baseQuery),
+        Image.find(baseQuery)
+            .select('title currentOwner assetCategory thumbnailUrl imageHash isBurned createdAt')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+    ]);
+
+    const totalPages = Math.ceil(totalImages / limit);
+    const paginationData = {
+        totalImages,
+        totalPages,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages
+    };
+
+    // 5. Response Handling
+    if (!myImages || myImages.length === 0) {
+        return res.status(200).json(
+            new ApiResponse(200, { images: [], pagination: paginationData }, "No verified images found yet.")
+        );
+    }
 
     return res.status(200).json(
-        new ApiResponse(200, myImages, "your images fetched successfully")
-    )
-})
+        new ApiResponse(200, {
+            images: myImages,
+            pagination: paginationData
+        }, "Your assets fetched successfully.")
+    );
+});
 
-
-// ei controller ta kon context a use korbo mathay nai kno j banaichilm
 /**
  * @route GET /api/v1/images/details/:hash
- * @description Retrieves detailed information for a specific image by its unique hash.
+ * @description Fetches detailed provenance data for a specific image by its unique hash.
+ * This is a public route, but it provides ownership context if a viewerWallet is passed.
+ * Supports decentralized transparency by providing direct IPFS gateway links.
  */
 const getImageByHash = asyncHandler(async (req: Request, res: Response) => {
-    const { hash } = req.params as IImageHashParams;
+    const {hash} = req.params;
 
-    if (!hash) {
-        throw new ApiError(400, "Image hash is required in the URL parameters");
+    if(!hash || hash.length == 0) {
+        throw new ApiError(404, "hash not found")
     }
+    const viewerWallet = req.query.viewerWallet as string;
 
-    const image = await Image.findOne({ imageHash: hash })
-        .populate("uploader", "fullName walletAddress");
+    const image = await Image.findOne({imageHash: hash, status: 'verified'});
 
     if(!image) {
-        throw new ApiError(404, "Image not found in the database")
+        throw new ApiError(404, "Asset not found or not verified yet.");
+    }
+
+    let responseData: any = {
+        title: image.title,
+        description: image.description,
+        assetCategory: image.assetCategory,
+        tags: image.tags,
+        fileDetails: image.fileDetails,
+        currentOwner: image.currentOwner,
+        thumbnailUrl: image.thumbnailUrl,
+        transactionHash: image.transactionHash,
+        watermarkID: image.watermarkID,
+        downloadUrl: `https://gateway.pinata.cloud/ipfs/${image.imageCID}`, 
+        metadataLink: `https://gateway.pinata.cloud/ipfs/${image.metadataCID}`,
+        isOwner: false
+    }
+
+    if (viewerWallet && viewerWallet.toLowerCase() === image.currentOwner.toLowerCase()) {
+        responseData.isOwner = true;
     }
 
     return res.status(200).json(
-        new ApiResponse(200, image, "Image details fetched successfully")
-    )
+        new ApiResponse(200, responseData, "Asset details fetched.")
+    );
 })
-
-// --- On-Chain Verification Logic ---
-
-/**
- * @route POST /api/v1/images/verify
- * @description Directly queries the Smart Contract to verify image provenance independently of the DB.
- * This is the ultimate proof of authenticity in a decentralized system.
- */
-const verifyImageOnChain = asyncHandler(async (req: Request, res: Response) => {
-    if(!req.file) {
-        throw new ApiError(400, "Please upload an image to verify")
-    }
-
-    try {
-        const fileBuffer = fs.readFileSync(req.file.path)
-        const uint8ArrayData = new Uint8Array(fileBuffer);
-        const imageHash = ethers.keccak256(uint8ArrayData);
-
-        console.log(`\n Verifying hash strictly on Blockchain: ${imageHash}`)
-
-        console.log("RPC URL:", config.rpcUrl);
-        console.log("Contract Address:", config.provenanceAddress);
-
-        // Initializing Ethers provider and contract instance for read-only query
-        const provider = new ethers.JsonRpcProvider(config.rpcUrl);
-        const contract = new ethers.Contract(config.provenanceAddress, PROVENANCE_ABI, provider)
-
-        const imageData = await contract.getFunction("images")(imageHash);
-
-        fs.unlinkSync(req.file.path);
-
-        // If the owner is a Zero Address, the image was never registered on-chain
-        if(imageData.owner === ethers.ZeroAddress) {
-            return res.status(404).json(
-                new ApiResponse(404, { verified: false, hash: imageHash }, "Fake or Unregistered image!")
-            )
-        }
-
-        return res.status(200).json(
-            new ApiResponse(200, {
-                verified: true,
-                hash: imageHash,
-                owner: imageData.owner,
-                metadataCID: imageData.metadataCID,
-                isTampered: imageData.isTampered,
-                isBurned: imageData.isBurned,
-                timestamp: imageData.timestamp?.toString()
-            }, "SUCCESS: Image data fetched from blockchain")
-        )
-    } catch (error) {
-        if (req.file?.path && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
-
-        console.error("Blockchain verification Error", error)
-        throw new ApiError(500, "Error verifying image directly from smart contract")
-    }
-})
-
 
 
 
 export {
     uploadAndGenerateProvenance,
+    confirmAndRegisterImage,
     getAllImages,
     getMyImages,
-    getImageByHash,
-    verifyImageOnChain
+    getImageByHash
 }
+
+
+
+

@@ -5,6 +5,13 @@ const config = {
     refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || "fallback_refresh_key",
     refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || "10d",
 
+    // for admin
+    adminAccessTokenSecret: process.env.ADMIN_ACCESS_TOKEN_SECRET || "fallback_secret_key",
+    adminAccessTokenExpiry: process.env.ADMIN_ACCESS_TOKEN_EXPIRY || "1d",
+    adminRefreshTokenSecret: process.env.ADMIN_REFRESH_TOKEN_SECRET || "fallback_refresh_key",
+    adminRefreshTokenExpiry: process.env.ADMIN_REFRESH_TOKEN_EXPIRY || "10d",
+    defaultAdminPassword: process.env.DEFAULT_ADMIN_PASSWORD || "shuvra20",
+
     // cloudinary
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME as string, 
     api_key: process.env.CLOUDINARY_API_KEY as string, 
@@ -16,9 +23,9 @@ const config = {
     pinataJwt: process.env.PINATA_JWT || "",
     gatewayUrl: process.env.GATEWAY_URL || "",
 
-    provenanceAddress: process.env.PROVENANCE_ADDRESS || "",
+    contractAddress: process.env.CONTRACT_ADDRESS || "",
     rpcUrl: process.env.RPC_URL || "",
-    wsUrl: process.env.WS_URL || ""
+    ownerPrivateKey: process.env.OWNER_PRIVATE_KEY || ""
 };
 
 export default config;

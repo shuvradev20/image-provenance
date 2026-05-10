@@ -13,14 +13,22 @@ export interface IImage extends Document {
     currentOwner: string;
     title: string;
     description: string;
+    assetCategory: 'photography' | 'digital_art' | 'ai_generated' | 'news_media' | 'illustration' | 'other';
+    tags: string[]; // Array of strings (e.g., ['cyberpunk', 'nature', 'portrait'])
+    fileDetails: {
+        fileType: string; 
+        fileSize: number; 
+        width: number;    
+        height: number;   
+    };
     imageHash: string; // Unique cryptographic hash of the raw image data
+    watermarkID: string;
     imageCID: string; // IPFS Content Identifier for the image file
     metadataCID: string; // CID of the JSON file containing all info, including the CID of image
+    thumbnailUrl: string;
+    originalAssetHash: string;
     transactionHash?: string;
-    isBurned: boolean;
-    isTampered: boolean;
-    walletAddress: string;
-    status: 'pending' | 'verified' | 'flagged' | 'burned';
+    status: 'pending' | 'verified' | 'burned';
 }
 
 const imageSchema = new Schema<IImage>({
@@ -33,7 +41,8 @@ const imageSchema = new Schema<IImage>({
     currentOwner: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        index: true
     },
     title: {
         type: String,
@@ -45,7 +54,30 @@ const imageSchema = new Schema<IImage>({
         required: true,
         trim: true
     },
+    assetCategory: {
+        type: String,
+        enum: ['photography', 'digital_art', 'ai_generated', 'news_media', 'illustration', 'other'],
+        required: true,
+        index: true // Indexed because users will filter by category in the marketplace
+    },
+    tags: [{
+        type: String,
+        trim: true,
+        lowercase: true,
+    }],    
+    fileDetails: {
+        fileType: { type: String, required: true },
+        fileSize: { type: Number, required: true },
+        width: { type: Number, required: true },
+        height: { type: Number, required: true }
+    },
     imageHash: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true
+    },
+    watermarkID: {
         type: String,
         required: true,
         unique: true,
@@ -61,27 +93,23 @@ const imageSchema = new Schema<IImage>({
         required: true,
         unique: true
     },
+    thumbnailUrl: {
+        type: String,
+        required: true
+    },
+    originalAssetHash: {
+        type: String,
+        required: true,
+        unique: true
+    },
     transactionHash: {
         type: String,
         unique: true,
         sparse: true // Allows multiple 'pending' images without a transaction hash yet
     },
-    isTampered: {
-        type: Boolean,
-        default: false
-    },
-    isBurned: {
-        type: Boolean,
-        default: false
-    },
-    walletAddress: {
-        type: String,
-        required: true,
-        trim: true
-    },
     status: {
         type: String,
-        enum: ['pending', 'verified', 'flagged', 'burned'],
+        enum: ['pending', 'verified', 'burned'],
         default: 'pending'
     }
 }, { timestamps: true });

@@ -2,7 +2,6 @@ import mongoose, {Schema, type Document} from "mongoose";
 import jwt from "jsonwebtoken";
 import config from "../config/config.js"
 
-// --- User Model Interface ---
 
 /**
  * @interface IUser
@@ -21,14 +20,12 @@ export interface IUser extends Document {
     nidImageUrl?: string | undefined;
     selfieWithNidUrl?: string | undefined;
     role: 'user' | 'admin'
-    kycStatus: 'unverified' | 'pending' | 'verified';
+    kycStatus: 'unverified' | 'pending' | 'processing' | 'verified';
     isBlockchainRegistered: boolean; // Becomes true after admin calls Smart Contract
     refreshToken?: string;
     generateAccessToken(): string;
     generateRefreshToken(): string;
 }
-
-// --- Database Schema Definition ---
 
 const userSchema = new Schema<IUser>({
      fullName: {
@@ -88,8 +85,8 @@ const userSchema = new Schema<IUser>({
     },
     kycStatus: { 
         type: String, 
-        enum: ['unverified', 'pending', 'verified'], 
-        default: 'unverified' // Default is unverified at Step 1
+        enum: ['unverified', 'pending', 'processing', 'verified'], 
+        default: 'unverified'
     },
     isBlockchainRegistered: { 
         type: Boolean, 
@@ -100,7 +97,6 @@ const userSchema = new Schema<IUser>({
     },
 }, {timestamps: true});
 
-// --- Instance Methods (Auth) ---
 
 /**
  * @method generateAccessToken
