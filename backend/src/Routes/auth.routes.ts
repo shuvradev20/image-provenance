@@ -1,21 +1,23 @@
 import { Router } from "express";
-import { registerUser, getNonce, verifySignature, logoutUser, refreshAccessToken } from "../Controllers/auth.controller.js";
-import { upload } from "../Middlewares/multer.middleware.js";
+import { googleAuth, linkWallet, getNonce, walletLogin, submitKyc, refreshAccessToken, logoutUser } from "../Controllers/auth.controller.js";
+import { uploadLocal } from "../Middlewares/multer.middleware.js";
 import { verifyJWT } from "../Middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.route("/users").post(
-    upload.fields([
+router.route("/sessions/google").post(googleAuth);
+router.route("/sessions/wallet").post(walletLogin);
+router.route("sessions/refresh").post(refreshAccessToken);
+router.route("/session").delete(verifyJWT, logoutUser);
+router.route("/wallets/:walletAddress/nonce").get(getNonce);
+router.route("/users/me/wallet").put(verifyJWT, linkWallet);
+router.route("/users/me/kyc").post(
+    verifyJWT,
+    uploadLocal.fields([
         {name: "nidImage", maxCount: 1},
         {name: "selfieWithNid", maxCount: 1}
     ]),
-    registerUser
+    submitKyc
 );
-
-router.route("/nonce/:walletAddress").get(getNonce);
-router.route("/session").post(verifySignature);
-router.route("/session").delete(verifyJWT, logoutUser);
-router.route("/session/refresh").post(refreshAccessToken);
 
 export default router;

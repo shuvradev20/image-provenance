@@ -1,18 +1,25 @@
 import { Router } from "express";
-import { addNewAdmin, getAllUsers, getFlaggedImages, getPendingUsers, warnUser } from "../Controllers/admin.controller.js";
-import { verifyJWT } from "../Middlewares/auth.middleware.js";
-import { isAdmin } from "../Middlewares/admin.middleware.js";
-import { isOwner } from "../Middlewares/owner.middleware.js";
+import { adminLogin, 
+    createAdmin, 
+    refreshAdminToken,
+    adminLogout,
+    getUsers,
+    getPendingKycUsers,
+    approveKyc,
+    rejectKyc
+} from "../Controllers/admin.controller.js";
+import { verifyAdmin, isSuperAdmin } from "../Middlewares/adminAuth.middleware.js";
 
 const router = Router();
 
-router.use(verifyJWT)
-
-router.route("/admins").post(isOwner, addNewAdmin);
-router.route("/users/pending").get(isAdmin, getPendingUsers);
-router.route("/users").get(isAdmin, getAllUsers);
-router.route("/images/flagged").get(isAdmin, getFlaggedImages);
-router.route("/users/:walletAddress/warning").patch(isAdmin, warnUser);
-
+router.route("/sessions").post(adminLogin);
+router.route("/sessions/refresh").post(refreshAdminToken);
+router.route("/").post(verifyAdmin, isSuperAdmin, createAdmin);
+router.use(verifyAdmin);
+router.route("/sessions").delete(adminLogout);
+router.route("/users").get(getUsers);
+router.route("users/pending-kyc").get(getPendingKycUsers);
+router.route("/kyc-approvals").post(approveKyc);
+router.route("/kyc-rejections").post(rejectKyc);
 
 export default router;
