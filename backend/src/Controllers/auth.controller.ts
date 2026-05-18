@@ -2,15 +2,15 @@ import { type Request, type Response } from "express";
 import { asyncHandler } from "../Utils/asyncHandler.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../Utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
 import { User } from "../Models/user.models.js";
 import { ethers } from "ethers";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../config/config.js";
+import fs from "fs/promises";
 
 
-//---Token GeneratorHelper---
 
 interface IGoogleAuth {
     email: string;
@@ -21,6 +21,7 @@ interface IGoogleAuth {
 interface ILinkWallet {
     walletAddress: string;
     signature: string;
+    timestamp: number
 }
 
 interface IWalletLogin {
@@ -30,12 +31,8 @@ interface IWalletLogin {
 
 interface ISubmitKyc {
     nidNumber: string;
-    // Note: multer er file gulo req.files e ashe, req.body te na. 
-    // Tai interface e sudhu nidNumber thakbe.
 }
 
-
-// --- Internal Auth Utilities ---
 
 /**
  * @function generateAccessTokenAndRefreshTokens
@@ -69,8 +66,6 @@ const cookieOptions = {
     httpOnly: true,
     secure: true,
 }
-
-//---Google Auth---
 
 /**
  * @route POST /api/v1/auth/google
@@ -112,11 +107,11 @@ const googleAuth = asyncHandler(async (req: Request, res: Response) => {
  * @description Protected route. Links a MetaMask wallet to the currently logged-in Google user.
  */
 const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
-    const {walletAddress, signature} = req.body as ILinkWallet;
+    const {walletAddress, signature, timestamp} = req.body as ILinkWallet;
     const userId = req.user?._id;
 
-    if(!walletAddress || !signature) {
-        throw new ApiError(400, "Wallet address and signature are required");
+    if(!walletAddress || !signature || !timestamp) {
+        throw new ApiError(400, "Wallet address, signature, and timestamp are required");
     }
 
     const user = await User.findById(userId);
@@ -134,8 +129,15 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
         throw new ApiError(409, "This wallet is already linked to another account");
     }
 
+    const currentTime = Date.now();
+    const timeDifference = currentTime - timestamp;
+
+    if (timeDifference > 2 * 60 * 1000 || timeDifference < -60000) { 
+        throw new ApiError(400, "Signature expired! Please sign the message again.");
+    }
+
     try {
-        const message = `Link wallet to ProveNode account: ${user.email}`;
+        const message = `Link wallet to ProveNode account: ${user.email} | Time: ${timestamp}`;
         const recoveredAddress = ethers.verifyMessage(message, signature);
 
         if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
@@ -252,23 +254,44 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
         throw new ApiError(400, "NID and Selfie images are required");
     }
 
-    const nidImage = await uploadOnCloudinary(nidImageLocalPath);
-    const selfie = await uploadOnCloudinary(selfieLocalPath);
+    let nidImage: any = null;
+    let selfie: any = null;
 
-    if(!nidImage || !selfie) {
-        throw new ApiError(500, "Failed to upload images to Cloudinary");
+    try {
+        nidImage = await uploadOnCloudinary(nidImageLocalPath);
+        if (!nidImage){
+            throw new ApiError(500, "Failed to upload NID image");
+        } 
+
+        selfie = await uploadOnCloudinary(selfieLocalPath);
+        if (!selfie){
+            throw new ApiError(500, "Failed to upload Selfie image");
+        } 
+    
+        user.nidNumber = nidNumber;
+        user.nidImageUrl = nidImage.url;
+        user.selfieWithNidUrl = selfie.url;
+        user.kycStatus = 'pending';
+    
+        await user.save({validateBeforeSave: false});
+    
+        return res.status(200).json(
+            new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
+        )
+    } catch (error) {
+        if(nidImage && !selfie) {
+            const publicId = nidImage.url.split('/').pop()?.split('.')[0];
+            if (publicId) await deleteFromCloudinary(publicId);
+        }
+        throw error;
+    } finally {
+        try {
+            if (nidImageLocalPath) await fs.unlink(nidImageLocalPath);
+            if (selfieLocalPath) await fs.unlink(selfieLocalPath);
+        } catch (cleanupErr) {
+            console.error("Temp file cleanup failed:", cleanupErr);
+        }
     }
-
-    user.nidNumber = nidNumber;
-    user.nidImageUrl = nidImage.url;
-    user.selfieWithNidUrl = selfie.url;
-    user.kycStatus = 'pending';
-
-    await user.save({validateBeforeSave: false});
-
-    return res.status(200).json(
-        new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
-    )
 });
 
 /**

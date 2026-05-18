@@ -197,14 +197,26 @@ const adminLogout = asyncHandler(async (req: AdminRequest, res: Response) => {
 /**
  * @route GET /api/v1/admin/users
  * @description Retrieves a master list of all registered users in the system.
+ * Implements Pagination to prevent server memory crashes.
  */
 const getUsers = asyncHandler(async (req: Request, res: Response) => {
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 40);
+    const skip = (page - 1) * limit;
+
     const users = await User.find({kycStatus: 'verified'})
         .select("-refreshToken -nonce")
         .sort({createdAt: -1})
+        .skip(skip)
+        .limit(limit);
+    
+    const totalUsers = await User.countDocuments({kycStatus: 'verified'});
     
     return res.status(200).json(
-        new ApiResponse(200, users, "Verified users fetched successfully")
+        new ApiResponse(200, {
+            users,
+            pagination: { totalUsers, currentPage: page, limit }
+        }, "Verified users fetched successfully")
     );
 });
 
@@ -213,12 +225,23 @@ const getUsers = asyncHandler(async (req: Request, res: Response) => {
  * @description Fetches all users who have submitted KYC and are waiting for approval.
  */
 const getPendingKycUsers = asyncHandler(async (req: Request, res: Response) => {
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 40);
+    const skip = (page - 1) * limit;
+
     const pendingUsers = await User.find({kycStatus: 'pending'})
         .select("fullName email walletAddress nidNumber nidImageUrl selfieWithNidUrl createdAt")
-        .sort({createdAt: 1});
+        .sort({createdAt: 1})
+        .skip(skip)
+        .limit(limit);
+    
+    const totalUsers = await User.countDocuments({kycStatus: 'pending'});
     
     return res.status(200).json(
-        new ApiResponse(200, pendingUsers, "Pending KYC requests fetched successfully")
+        new ApiResponse(200, {
+            users: pendingUsers,
+            pagination: { totalUsers, currentPage: page, limit }
+        }, "Pending KYC requests fetched successfully")
     );
 });
 
@@ -233,13 +256,18 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, "User ID is required")
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findOneAndUpdate(
+        { _id: userId, kycStatus: 'pending' },
+        { $set: { kycStatus: 'processing' } },
+        { new: true }
+    );
 
-    if(!user || user.kycStatus !== 'pending') {
-        throw new ApiError(400, "Invalid user or KYC is not in pending state");
+    if(!user) {
+        throw new ApiError(400, "Invalid user, or KYC is not pending, or is already being processed!");
     }
 
     if(!user.walletAddress) {
+        await User.findByIdAndUpdate(userId, { kycStatus: 'pending' });
         throw new ApiError(400, "User has no wallet address linked");
     }
 
@@ -265,6 +293,7 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error("Blockchain Error:", error);
+        await User.findByIdAndUpdate(userId, { kycStatus: 'pending' });
         throw new ApiError(500, "Failed to register user on blockchain. Check owner wallet balance or network status.")
     }
 });
@@ -339,6 +368,4 @@ export {
     getPendingKycUsers,
     approveKyc,
     rejectKyc
-
-
 }
