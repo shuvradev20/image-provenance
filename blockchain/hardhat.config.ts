@@ -20,19 +20,18 @@ export default defineConfig({
     },
   },
   networks: {
-    hardhatMainnet: {
-      type: "edr-simulated",
-      chainType: "l1",
-    },
-    hardhatOp: {
-      type: "edr-simulated",
-      chainType: "op",
-    },
-    sepolia: {
+    arbitrumSepolia: {
       type: "http",
-      chainType: "l1",
-      url: configVariable("SEPOLIA_RPC_URL"),
-      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
+      url: configVariable("ARBITRUM_SEPOLIA_RPC_URL"),
+      accounts: [configVariable("ARBITRUM_SEPOLIA_PRIVATE_KEY")],
+    },
+  },
+  verify: {
+    etherscan: {
+      apiKey: configVariable("ARBISCAN_API_KEY"),
     },
   },
 });
+
+
+// configVariable er password laptop er passkey

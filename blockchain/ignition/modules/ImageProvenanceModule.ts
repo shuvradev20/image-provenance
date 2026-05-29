@@ -8,4 +8,4 @@ const ImageProvenanceModule = buildModule("ImageProvenanceModule", (m) => {
 export default ImageProvenanceModule;
 
 
-// npx hardhat ignition deploy ignition/modules/ImageProvenanceModule.ts --network localhost
+// deployedAddress: 0xe8dE3089dCFf50b247C5e801D43830460C98f17B
