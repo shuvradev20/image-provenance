@@ -117,36 +117,46 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
         throw new ApiError(409, "This exact modified asset is already registered in the system.");
     }
 
-    console.log("Uploading to Cloudinary (Web2) & Pinata (Web3)...");
+    console.log("Uploading to Cloudinary (Web2) & Pinata (Web3) in PARALLEL...");
 
-    const cloudinaryResponse = await uploadBufferOnCloudinary(watermarkedImageBuffer) as any;
-    if (!cloudinaryResponse?.secure_url) {
-        throw new ApiError(500, "Failed to generate UI thumbnail via Cloudinary.");
-    }
-
-    const thumbnailUrl = cloudinaryResponse.secure_url;
-
-    fileDetails.width = cloudinaryResponse.width;
-    fileDetails.height = cloudinaryResponse.height;
-
+    // 1. Dir setup agei kore nicchi
     const tempDir = path.join(process.cwd(), 'public', 'temp');
     await fs.mkdir(tempDir, { recursive: true });
-
     const tempFilePath = path.join(tempDir, `watermarked_${Date.now()}.png`);
-    await fs.writeFile(tempFilePath, watermarkedImageBuffer);
 
-    let imageCID, metadataCID;
+    let imageCID, metadataCID, cloudinaryResponse, thumbnailUrl;
+
     try {
-        imageCID = await uploadImageBufferToPinata(
-            watermarkedImageBuffer, 
-            req.file.originalname, 
-            req.file.mimetype
-        );
+        // 2. Promise.all diye 3 ta independent kaj eksathe run koracchi
+        const [cloudRes, pinataImgCID] = await Promise.all([
+            uploadBufferOnCloudinary(watermarkedImageBuffer),
+            uploadImageBufferToPinata(
+                watermarkedImageBuffer, 
+                req.file.originalname, 
+                req.file.mimetype
+            ),
+            fs.writeFile(tempFilePath, watermarkedImageBuffer) // Temp file o parallel e save hocche
+        ]);
 
+        // Values assign kora
+        cloudinaryResponse = cloudRes as any;
+        imageCID = pinataImgCID;
+
+        // 3. Independent validation gulo ekhane korchi
+        if (!cloudinaryResponse?.secure_url) {
+            throw new ApiError(500, "Failed to generate UI thumbnail via Cloudinary.");
+        }
         if (!imageCID){
             throw new ApiError(500, "Failed to upload raw image to IPFS.");
         }
 
+        // File details update
+        thumbnailUrl = cloudinaryResponse.secure_url;
+        fileDetails.width = cloudinaryResponse.width;
+        fileDetails.height = cloudinaryResponse.height;
+
+        // 4. Ebar Metadata upload (Eta must sequential karon imageCID ar fileDetails lagbe)
+        console.log("Uploading JSON Metadata to Pinata...");
         metadataCID = await uploadMetadataToPinata(
             title, 
             description, 
@@ -161,13 +171,15 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
         if (!metadataCID) {
             throw new ApiError(500, "Failed to upload JSON metadata to IPFS.");
         }
+
     } finally {
+        // 5. Cleanup block same thakbe
         try {
             await fs.unlink(tempFilePath);
         } catch (cleanupErr) {
             console.error("Temp file cleanup failed:", cleanupErr);
         }
-    };
+    }
 
     console.log("Pipeline Complete! Dispatching Payload to Frontend.");
 
@@ -238,23 +250,26 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
 
         let isDataAuthentic = false;
 
-        for (const log of receipt.logs) {
-            try {
-                const decodedLog = iface.parseLog({ topics: log.topics as string[], data: log.data });
+    const formattedLocalWatermark = ethers.zeroPadValue("0x" + watermarkID, 32).toLowerCase();
+    const formattedLocalHash = imageHash.toLowerCase();
+
+    for (const log of receipt.logs) {
+        try {
+            const decodedLog = iface.parseLog({ topics: log.topics as string[], data: log.data });
+            
+            if (decodedLog && decodedLog.name === "ImageRegistered") {
+                const onChainHash = decodedLog.args.hash.toLowerCase();
+                const onChainWatermark = decodedLog.args.watermarkID.toLowerCase();
                 
-                if (decodedLog && decodedLog.name === "ImageRegistered") {
-                    const onChainHash = decodedLog.args.hash.toLowerCase();
-                    const onChainWatermark = decodedLog.args.watermarkID.toLowerCase();
-                    
-                    if (onChainHash === imageHash.toLowerCase() && onChainWatermark === watermarkID.toLowerCase()) {
-                        isDataAuthentic = true;
-                        break;
-                    }
+                if (onChainHash === formattedLocalHash && onChainWatermark === formattedLocalWatermark) {
+                    isDataAuthentic = true;
+                    break;
                 }
-            } catch (e) {
-                continue;
-            };
-        };
+            }
+        } catch (e) {
+            continue;
+        }
+    }
 
         if (!isDataAuthentic) {
             throw new ApiError(400, "Payload Manipulation Detected! The provided hash does not match the blockchain transaction.");

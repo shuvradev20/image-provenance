@@ -12,7 +12,7 @@ export interface IUser extends Document {
     fullName: string;
     email: string;
     googleId?: string;
-    walletAddress?: string;
+    connectedWallets: string[];
     nonce?: string; // Used for cryptographically signing messages in Web3 auth
     bio?: string;
     profileImage?: string;
@@ -45,22 +45,22 @@ const userSchema = new Schema<IUser>({
         sparse: true, 
         unique: true
     },
-    walletAddress: {
-        type: String,
-        sparse: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
+    connectedWallets: {
+        type: [{
+            type: String,
+            lowercase: true,
+            trim: true
+        }],
+        default: [], 
         index: true
     },
-    
     nonce: {
         type: String,
     },
     nidNumber: {
         type: String,
         unique: true,
-        sparse: true, // Allows multiple nulls while maintaining uniqueness for provided values
+        sparse: true,
         trim: true
     },
     nidImageUrl: {
@@ -108,7 +108,7 @@ userSchema.methods.generateAccessToken = function (): string {
         {
             _id: this._id,
             email: this.email,
-            walletAddress: this.walletAddress,
+            connectedWallets: this.connectedWallets,
             fullName: this.fullName,
             role: this.role
         },

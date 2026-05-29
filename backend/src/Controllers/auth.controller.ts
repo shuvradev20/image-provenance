@@ -68,7 +68,7 @@ const cookieOptions = {
 }
 
 /**
- * @route POST /api/v1/auth/google
+ * @route POST /api/v1/auth/sessions/google
  * @description Handles both Sign Up and Sign In via Google.
  */
 const googleAuth = asyncHandler(async (req: Request, res: Response) => {
@@ -86,7 +86,8 @@ const googleAuth = asyncHandler(async (req: Request, res: Response) => {
             fullName,
             googleId,
             kycStatus: 'unverified',
-            isBlockchainRegistered: false
+            isBlockchainRegistered: false,
+            connectedWallets: []
         })
     }
 
@@ -103,7 +104,7 @@ const googleAuth = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/auth/link-wallet
+ * @route POST /api/v1/auth/users/me/wallet
  * @description Protected route. Links a MetaMask wallet to the currently logged-in Google user.
  */
 const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
@@ -120,11 +121,11 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
         throw new ApiError(404, "User not found");
     }
 
-    if(user.walletAddress) {
-        throw new ApiError(400, "A wallet is already linked to this account")
+    if(user.connectedWallets && user.connectedWallets.includes(walletAddress.toLowerCase())) {
+        throw new ApiError(400, "This wallet is already linked to your account");
     }
 
-    const walletExists = await User.findOne({ walletAddress: walletAddress.toLowerCase()});
+    const walletExists = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
     if(walletExists) {
         throw new ApiError(409, "This wallet is already linked to another account");
     }
@@ -144,12 +145,12 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
             throw new ApiError(401, "Invalid Signature! You don't own this wallet.");
         }
 
-        user.walletAddress = walletAddress.toLowerCase();
+        user.connectedWallets.push(walletAddress.toLowerCase());
         user.nonce = Math.floor(Math.random() * 1000000).toString();
         await user.save({ validateBeforeSave: false})
 
         return res.status(200).json(
-            new ApiResponse(200, { walletAddress: user.walletAddress }, "Wallet linked successfully")
+            new ApiResponse(200, { connectedWallets: user.connectedWallets }, "Wallet linked successfully")
         )
     } catch (error) {
         throw new ApiError(400, "Signature verification failed");
@@ -157,7 +158,7 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/auth/nonce/:walletAddress
+ * @route GET /api/v1/auth/wallets/:walletAddress/nonce
  * @description Gets nonce for wallet login. Fails if wallet is not registered.
  */
 const getNonce = asyncHandler(async (req: Request, res: Response) => {
@@ -167,7 +168,7 @@ const getNonce = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, "Wallet address is required and must be a string");
     }
 
-    const user = await User.findOne({ walletAddress: walletAddress.toLowerCase()});
+    const user = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
     if(!user) {
         throw new ApiError(404, "No account found with this wallet. Please 'continue with Google' to sign in")
     }
@@ -178,7 +179,7 @@ const getNonce = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/auth/wallet-login
+ * @route POST /api/v1/auth/sessions/wallet
  * @description Logs in a returning user via MetaMask signature.
  */
 const walletLogin = asyncHandler(async (req: Request, res: Response) => {
@@ -188,7 +189,7 @@ const walletLogin = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, "Wallet address and signature are required")
     }
 
-    const user = await User.findOne({walletAddress: walletAddress.toLowerCase()});
+    const user = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
     if(!user) {
         throw new ApiError(404, "User not found. Please log in with Google.");
     }
@@ -217,7 +218,7 @@ const walletLogin = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/auth/submit-kyc
+ * @route POST /api/v1/auth/users/me/kyc
  * @description Protected route. Uploads NID and Selfie, updates status to pending.
  */
 const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
@@ -233,8 +234,8 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
         throw new ApiError(404, "User not found");
     }
 
-    if(!user.walletAddress) {
-        throw new ApiError(403, "Please link your wallet before submitting KYC");
+    if(!user.connectedWallets || user.connectedWallets.length === 0) {
+        throw new ApiError(403, "Please link a wallet before submitting KYC");
     }
     
     if(user.kycStatus === 'pending' || user.kycStatus === 'verified') {
@@ -295,7 +296,7 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/auth/refresh-token
+ * @route POST /api/v1/auth/sessions/refresh
  * @description Rotates the refresh token and issues a new access token to maintain the session seamlessly.
  */
 const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
@@ -339,7 +340,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/auth/logout
+ * @route DELETE /api/v1/auth/session
  * @description Clears the user's session by unsetting the refresh token in the DB and clearing browser cookies.
  */
 const logoutUser = asyncHandler(async (req: CustomRequest, res: Response) => {

@@ -7,7 +7,7 @@ const router = Router();
 
 router.route("/sessions/google").post(googleAuth);
 router.route("/sessions/wallet").post(walletLogin);
-router.route("sessions/refresh").post(refreshAccessToken);
+router.route("/sessions/refresh").post(refreshAccessToken);
 router.route("/session").delete(verifyJWT, logoutUser);
 router.route("/wallets/:walletAddress/nonce").get(getNonce);
 router.route("/users/me/wallet").put(verifyJWT, linkWallet);
