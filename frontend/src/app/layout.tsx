@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "@/components/ui/sonner";
 import { Inter, Geist_Mono } from "next/font/google";
 import { GoogleOAuthProvider } from "@react-oauth/google"; 
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -36,6 +37,7 @@ export default function RootLayout({
             {children}
           </GoogleOAuthProvider>
         </ThemeProvider>
+        <Toaster position="bottom-right" richColors />
       </body>
     </html>
   );
