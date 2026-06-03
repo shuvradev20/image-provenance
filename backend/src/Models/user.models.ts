@@ -9,20 +9,27 @@ import config from "../config/config.js"
  * Supports a hybrid authentication model (Web3 Wallet + Traditional Identity).
  */
 export interface IUser extends Document {
-    fullName: string;
-    email: string;
-    googleId?: string;
-    connectedWallets: string[];
-    nonce?: string; // Used for cryptographically signing messages in Web3 auth
-    bio?: string;
-    profileImage?: string;
-    nidNumber?: string | undefined;
-    nidImageUrl?: string | undefined;
-    selfieWithNidUrl?: string | undefined;
-    role: 'user' | 'admin'
+    fullName?: string | undefined;
+    email?: string | undefined;
+    googleId?: string | undefined;
+    walletAddress?: string | undefined;
+    nonce?: string | undefined; // Used for cryptographically signing messages in Web3 auth
+    bio?: string | undefined;
+    profileImage?: string | undefined;
+    coverImage?: string | undefined;
+    location?: string | undefined;
+    socialLinks?: {
+        platform: string;
+        url: string;
+    }[] | undefined;
+    governmentId?: string | undefined;
+    govIdImageUrl?: string | undefined;
+    selfieWithGovIdUrl?: string | undefined;
     kycStatus: 'unverified' | 'pending' | 'processing' | 'verified';
+    kycSubmittedAt?: Date | null | undefined;
+    kycVerifiedAt?: Date | null | undefined;
     isBlockchainRegistered: boolean; // Becomes true after admin calls Smart Contract
-    refreshToken?: string;
+    refreshToken?: string | undefined;
     generateAccessToken(): string;
     generateRefreshToken(): string;
 }
@@ -30,12 +37,12 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
      fullName: {
         type: String,
-        required: true,
+        default: "Unnamed Creator",
         trim: true
     },
     email: {
         type: String,
-        required: true,
+        sparse: true,
         unique: true,
         lowercase: true,
         trim: true
@@ -45,28 +52,14 @@ const userSchema = new Schema<IUser>({
         sparse: true, 
         unique: true
     },
-    connectedWallets: {
-        type: [{
-            type: String,
-            lowercase: true,
-            trim: true
-        }],
-        default: [], 
-        index: true
-    },
-    nonce: {
-        type: String,
-    },
-    nidNumber: {
+    walletAddress: {
         type: String,
         unique: true,
-        sparse: true,
+        sparse: true, 
+        lowercase: true,
         trim: true
     },
-    nidImageUrl: {
-        type: String
-    },
-    selfieWithNidUrl: {
+    nonce: {
         type: String,
     },
     bio: {
@@ -78,15 +71,43 @@ const userSchema = new Schema<IUser>({
         type: String,
         default: ""
     },
-    role: {
+    coverImage: {
         type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
+        default: ""
+    },
+    location: {
+        type: String,
+        trim: true,
+        maxLength: 50
+    },
+    socialLinks: [{
+        platform: { type: String, trim: true },
+        url: { type: String, trim: true }
+    }],
+    governmentId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true
+    },
+    govIdImageUrl: {
+        type: String
+    },
+    selfieWithGovIdUrl: {
+        type: String,
     },
     kycStatus: { 
         type: String, 
         enum: ['unverified', 'pending', 'processing', 'verified'], 
         default: 'unverified'
+    },
+    kycSubmittedAt: {
+        type: Date,
+        default: null
+    },
+    kycVerifiedAt: {
+        type: Date,
+        default: null
     },
     isBlockchainRegistered: { 
         type: Boolean, 
@@ -108,9 +129,8 @@ userSchema.methods.generateAccessToken = function (): string {
         {
             _id: this._id,
             email: this.email,
-            connectedWallets: this.connectedWallets,
+            walletAddress: this.walletAddress,
             fullName: this.fullName,
-            role: this.role
         },
         config.accessTokenSecret,
         {

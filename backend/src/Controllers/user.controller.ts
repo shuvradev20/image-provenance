@@ -5,8 +5,9 @@ import { ApiResponse } from "../Utils/ApiResponse.js";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import { User } from "../Models/user.models.js";
 import { Image } from "../Models/image.models.js";
-import { uploadOnCloudinary } from "../Utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
 import fs from "fs/promises"
+
 
 
 interface IWalletAddressParams {
@@ -20,10 +21,16 @@ interface IMultipleWalletsBody {
 interface IUpdateProfileBody {
     fullName?: string;
     bio?: string;
+    location?: string;
+    socialLinks?: any;
+}
+
+interface ISubmitKyc {
+    governmentId: string;
 }
 
 /**
- * @route GET /api/v1/users/current-user
+ * @route GET /api/v1/users/me
  * @description Retrieves the authenticated user's private dashboard profile.
  * Hides sensitive internal tokens but shows KYC and wallet status.
  */
@@ -62,8 +69,10 @@ const getUserPublicProfile = asyncHandler(async (req: Request, res: Response) =>
         throw new ApiError(400, "Wallet address is required");
     }
 
-    const userProfile = await User.findOne({ walletAddress: walletAddress.toLowerCase() })
-        .select("fullName walletAddress bio profileImage isBlockchainRegistered createdAt");
+    const searchWallet = walletAddress.toLowerCase();
+
+    const userProfile = await User.findOne({ walletAddress: searchWallet })
+        .select("fullName walletAddress bio profileImage coverImage location socialLinks isBlockchainRegistered createdAt");
     
     if (!userProfile) {
         throw new ApiError(404, "User not found");
@@ -103,7 +112,7 @@ const getUserPublicProfile = asyncHandler(async (req: Request, res: Response) =>
 });
 
 /**
- * @route POST /api/v1/users/multiple-profiles
+ * @route POST /api/v1/users/batch
  * @description Efficiently resolves multiple wallet addresses into user profiles.
  * Optimized for feed/explore views utilizing O(1) Map structure.
  */
@@ -123,15 +132,17 @@ const getUsersByWallets = asyncHandler(async (req: Request, res: Response) => {
     // Fetch only what's necessary for a feed view
     const users = await User.find({
         walletAddress: { $in: lowerCaseWallets }
-    }).select("fullName walletAddress profileImage isBlockchainRegistered");
+    }).select("fullName connectedWallets profileImage isBlockchainRegistered");
 
     // Reduce to Key-Value pair for O(1) frontend rendering
     const usersMap = users.reduce((acc, user) => {
-        acc[user.walletAddress as string] = {
-            fullName: user.fullName,
-            profileImage: user.profileImage,
-            isBlockchainRegistered: user.isBlockchainRegistered
-        };
+        if (user.walletAddress && lowerCaseWallets.includes(user.walletAddress)) {
+            acc[user.walletAddress] = {
+                fullName: user.fullName,
+                profileImage: user.profileImage,
+                isBlockchainRegistered: user.isBlockchainRegistered
+            };
+        }
         return acc;
     }, {} as Record<string, any>);
 
@@ -141,7 +152,7 @@ const getUsersByWallets = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route PATCH /api/v1/users/update-profile
+ * @route PATCH /api/v1/users/me
  * @description Updates user profile details securely.
  * Blocks sensitive fields (email, wallet) from being maliciously updated.
  */
@@ -153,10 +164,9 @@ const updateProfile = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const userId = customReq.user._id;
-    const { fullName, bio } = req.body as IUpdateProfileBody;
+    const { fullName, bio, location, socialLinks } = req.body as IUpdateProfileBody;
 
-    // Type-safe update object
-    const updateFields: { fullName?: string; bio?: string; profileImage?: string } = {};
+    const updateFields: any = {};
 
     if (fullName && fullName.trim() !== "") {
         if (fullName.trim().length > 20) {
@@ -172,37 +182,148 @@ const updateProfile = asyncHandler(async (req: Request, res: Response) => {
         updateFields.bio = bio.trim();
     }
 
-    if (req.file) {
-        const localFilePath = req.file.path;
+    if (location && location.trim() !== "") {
+        if (location.trim().length > 50) {
+            throw new ApiError(400, "Location cannot exceed 50 characters");
+        }
+        updateFields.location = location.trim();
+    }
+
+    if (socialLinks) {
+        updateFields.socialLinks = typeof socialLinks === 'string' ? JSON.parse(socialLinks) : socialLinks;
+    }
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    const profileImageLocalPath = files?.profileImage?.[0]?.path;
+    if (profileImageLocalPath) {
+        
         try {
-            const uploadedImage = await uploadOnCloudinary(localFilePath);
+            const uploadedImage = await uploadOnCloudinary(profileImageLocalPath);
             if (uploadedImage) {
                 updateFields.profileImage = uploadedImage.url;
             } else {
-                throw new ApiError(500, "Failed to upload image to Cloudinary");
+                throw new ApiError(500, "Failed to upload profile image to Cloudinary");
             }
         } finally {
             try {
-                await fs.unlink(localFilePath);
+                await fs.unlink(profileImageLocalPath);
             } catch (error) {
-                console.error("Failed to delete temp profile image:", error)
+                console.error("Failed to delete temp profile image:", error);
             }
-        }     
+        }    
+    };
+
+    const coverImageLocalPath = files?.coverImage?.[0]?.path;
+
+    if (coverImageLocalPath) {
+        try {
+            const uploadedImage = await uploadOnCloudinary(coverImageLocalPath);
+            if (uploadedImage) {
+                updateFields.coverImage = uploadedImage.url;
+            } else {
+                throw new ApiError(500, "Failed to upload cover image to Cloudinary");
+            }
+        } finally {
+            try {
+                await fs.unlink(coverImageLocalPath);
+            } catch (error) {
+                console.error("Failed to delete temp cover image:", error);
+            }
+        }    
     };
 
     if (Object.keys(updateFields).length === 0) {
-        throw new ApiError(400, "Please provide at least one field (Name, Bio, or Image) to update");
+        throw new ApiError(400, "Please provide at least one field to update");
     } 
 
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: updateFields },
-        { new: true }
+        { returnDocument: 'after' }
     ).select("-refreshToken -nonce -googleId");
 
     return res.status(200).json(
         new ApiResponse(200, updatedUser, "Profile updated successfully")
     );
+});
+
+/**
+ * @route POST /api/v1/users/me/kyc
+ * @description Protected route. Uploads NID and Selfie, updates status to pending.
+ */
+const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
+    const {governmentId} = req.body as ISubmitKyc;
+    const userId = req.user?._id;
+
+    if(!governmentId) {
+        throw new ApiError(400, "Government ID is required");
+    }
+
+    const user = await User.findById(userId);
+    if(!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    if(!user.walletAddress) { 
+        throw new ApiError(403, "Please link a wallet before submitting KYC");
+    }
+    
+    if(user.kycStatus === 'pending' || user.kycStatus === 'verified') {
+        throw new ApiError(400, `KYC is already ${user.kycStatus}`)
+    }
+
+    const idExists = await User.findOne({governmentId});
+    if(idExists) {
+        throw new ApiError(409, "This ID is already registered to another account");
+    }
+
+    const files = req.files as {[fieldname: string]: Express.Multer.File[]};
+    const govIdImageLocalPath = files?.govIdImage?.[0]?.path;
+    const selfieLocalPath = files?.selfieWithGovId?.[0]?.path;
+
+    if(!govIdImageLocalPath || !selfieLocalPath) {
+        throw new ApiError(400, "govIdImage and selfieWithGovId are required");
+    }
+
+    let govIdImage: any = null;
+    let selfie: any = null;
+
+    try {
+        govIdImage = await uploadOnCloudinary(govIdImageLocalPath);
+        if (!govIdImage){
+            throw new ApiError(500, "Failed to upload Government ID image");
+        } 
+
+        selfie = await uploadOnCloudinary(selfieLocalPath);
+        if (!selfie){
+            throw new ApiError(500, "Failed to upload Selfie image");
+        } 
+    
+        user.governmentId = governmentId;
+        user.govIdImageUrl = govIdImage.url;
+        user.selfieWithGovIdUrl = selfie.url;
+        user.kycStatus = 'pending';
+        user.kycSubmittedAt = new Date();
+    
+        await user.save({validateBeforeSave: false});
+    
+        return res.status(200).json(
+            new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
+        )
+    } catch (error) {
+        if(govIdImage && !selfie) {
+            if (govIdImage.public_id) await deleteFromCloudinary(govIdImage.public_id);
+        }
+        throw error;
+    } finally {
+        try {
+            if (govIdImageLocalPath) await fs.unlink(govIdImageLocalPath);
+            if (selfieLocalPath) await fs.unlink(selfieLocalPath);
+        } catch (cleanupErr) {
+            console.error("Temp file cleanup failed:", cleanupErr);
+        }
+    }
 });
 
 
@@ -211,4 +332,5 @@ export {
     getUserPublicProfile,
     getUsersByWallets,
     updateProfile,
+    submitKyc
 }

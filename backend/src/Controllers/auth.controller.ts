@@ -2,13 +2,11 @@ import { type Request, type Response } from "express";
 import { asyncHandler } from "../Utils/asyncHandler.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
 import { User } from "../Models/user.models.js";
 import { ethers } from "ethers";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../config/config.js";
-import fs from "fs/promises";
 
 
 
@@ -29,9 +27,6 @@ interface IWalletLogin {
     signature: string;
 }
 
-interface ISubmitKyc {
-    nidNumber: string;
-}
 
 
 /**
@@ -69,7 +64,7 @@ const cookieOptions = {
 
 /**
  * @route POST /api/v1/auth/sessions/google
- * @description Handles both Sign Up and Sign In via Google.
+ * @description Path A: Web2 First Flow. Handles Google Sign In/Up.
  */
 const googleAuth = asyncHandler(async (req: Request, res: Response) => {
     const {email, fullName, googleId} = req.body as IGoogleAuth;
@@ -87,8 +82,15 @@ const googleAuth = asyncHandler(async (req: Request, res: Response) => {
             googleId,
             kycStatus: 'unverified',
             isBlockchainRegistered: false,
-            connectedWallets: []
         })
+    } else {
+        if (!user.googleId) {
+            user.googleId = googleId;
+            if (user.fullName === "Unnamed Creator") {
+                user.fullName = fullName;
+            }
+            await user.save({ validateBeforeSave: false });
+        }
     }
 
     const {accessToken, refreshToken} = await generateAccessTokenAndRefreshTokens(user._id);
@@ -121,12 +123,18 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
         throw new ApiError(404, "User not found");
     }
 
-    if(user.connectedWallets && user.connectedWallets.includes(walletAddress.toLowerCase())) {
-        throw new ApiError(400, "This wallet is already linked to your account");
+    const normalizedAddress = walletAddress.toLowerCase()
+
+    if (user.walletAddress) {
+        if (user.walletAddress === normalizedAddress) {
+            throw new ApiError(400, "This wallet is already linked to your account");
+        } else {
+            throw new ApiError(400, "You already have a wallet connected. You cannot link multiple wallets.");
+        }
     }
 
-    const walletExists = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
-    if(walletExists) {
+    const walletExists = await User.findOne({ walletAddress: normalizedAddress });
+    if (walletExists) {
         throw new ApiError(409, "This wallet is already linked to another account");
     }
 
@@ -141,16 +149,16 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
         const message = `Link wallet to ProveNode account: ${user.email} | Time: ${timestamp}`;
         const recoveredAddress = ethers.verifyMessage(message, signature);
 
-        if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+        if(recoveredAddress.toLowerCase() !== normalizedAddress) {
             throw new ApiError(401, "Invalid Signature! You don't own this wallet.");
         }
 
-        user.connectedWallets.push(walletAddress.toLowerCase());
+        user.walletAddress = normalizedAddress;
         user.nonce = Math.floor(Math.random() * 1000000).toString();
         await user.save({ validateBeforeSave: false})
 
         return res.status(200).json(
-            new ApiResponse(200, { connectedWallets: user.connectedWallets }, "Wallet linked successfully")
+            new ApiResponse(200, { walletAddress: user.walletAddress }, "Wallet linked successfully")
         )
     } catch (error) {
         throw new ApiError(400, "Signature verification failed");
@@ -159,7 +167,7 @@ const linkWallet = asyncHandler(async (req: CustomRequest, res: Response) => {
 
 /**
  * @route GET /api/v1/auth/wallets/:walletAddress/nonce
- * @description Gets nonce for wallet login. Fails if wallet is not registered.
+ * @description Path B: Web3 First Flow. Gets nonce or dynamically creates a new user.
  */
 const getNonce = asyncHandler(async (req: Request, res: Response) => {
     const { walletAddress } = req.params;
@@ -168,9 +176,21 @@ const getNonce = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, "Wallet address is required and must be a string");
     }
 
-    const user = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
+    const normalizedAddress = walletAddress.toLowerCase();
+    const newNonce = Math.floor(Math.random() * 1000000).toString();
+
+    let user = await User.findOne({ walletAddress: normalizedAddress });
+
     if(!user) {
-        throw new ApiError(404, "No account found with this wallet. Please 'continue with Google' to sign in")
+        user = await User.create({
+            walletAddress: normalizedAddress,
+            nonce: newNonce,
+            kycStatus: 'unverified',
+            isBlockchainRegistered: false,
+        })
+    } else {
+        user.nonce = newNonce;
+        await user.save({ validateBeforeSave: false });
     }
 
     return res.status(200).json(
@@ -180,7 +200,7 @@ const getNonce = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * @route POST /api/v1/auth/sessions/wallet
- * @description Logs in a returning user via MetaMask signature.
+ * @description Logs in a Web3 user via MetaMask signature.
  */
 const walletLogin = asyncHandler(async (req: Request, res: Response) => {
     const {walletAddress, signature} = req.body as IWalletLogin;
@@ -189,14 +209,16 @@ const walletLogin = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(400, "Wallet address and signature are required")
     }
 
-    const user = await User.findOne({ connectedWallets: walletAddress.toLowerCase()});
+    const normalizedAddress = walletAddress.toLowerCase();
+    const user = await User.findOne({ walletAddress: normalizedAddress });
+
     if(!user) {
-        throw new ApiError(404, "User not found. Please log in with Google.");
+        throw new ApiError(404, "User not found. Please request a nonce first to register.");
     }
 
     try {
         const recoveredAddress = ethers.verifyMessage(user.nonce as string, signature);
-        if(recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+        if(recoveredAddress.toLowerCase() !== normalizedAddress) {
             throw new ApiError(401, "Invalid Signature!")
         }
 
@@ -217,83 +239,7 @@ const walletLogin = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @route POST /api/v1/auth/users/me/kyc
- * @description Protected route. Uploads NID and Selfie, updates status to pending.
- */
-const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
-    const {nidNumber} = req.body as ISubmitKyc;
-    const userId = req.user?._id;
 
-    if(!nidNumber) {
-        throw new ApiError(400, "NID Number is required");
-    }
-
-    const user = await User.findById(userId);
-    if(!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    if(!user.connectedWallets || user.connectedWallets.length === 0) {
-        throw new ApiError(403, "Please link a wallet before submitting KYC");
-    }
-    
-    if(user.kycStatus === 'pending' || user.kycStatus === 'verified') {
-        throw new ApiError(400, `KYC is already ${user.kycStatus}`)
-    }
-
-    const nidExists = await User.findOne({nidNumber});
-    if(nidExists) {
-        throw new ApiError(409, "This NID is already registered to another account");
-    }
-
-    const files = req.files as {[fieldname: string]: Express.Multer.File[]};
-    const nidImageLocalPath = files?.nidImage?.[0]?.path;
-    const selfieLocalPath = files?.selfieWithNid?.[0]?.path;
-
-    if(!nidImageLocalPath || !selfieLocalPath) {
-        throw new ApiError(400, "NID and Selfie images are required");
-    }
-
-    let nidImage: any = null;
-    let selfie: any = null;
-
-    try {
-        nidImage = await uploadOnCloudinary(nidImageLocalPath);
-        if (!nidImage){
-            throw new ApiError(500, "Failed to upload NID image");
-        } 
-
-        selfie = await uploadOnCloudinary(selfieLocalPath);
-        if (!selfie){
-            throw new ApiError(500, "Failed to upload Selfie image");
-        } 
-    
-        user.nidNumber = nidNumber;
-        user.nidImageUrl = nidImage.url;
-        user.selfieWithNidUrl = selfie.url;
-        user.kycStatus = 'pending';
-    
-        await user.save({validateBeforeSave: false});
-    
-        return res.status(200).json(
-            new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
-        )
-    } catch (error) {
-        if(nidImage && !selfie) {
-            const publicId = nidImage.url.split('/').pop()?.split('.')[0];
-            if (publicId) await deleteFromCloudinary(publicId);
-        }
-        throw error;
-    } finally {
-        try {
-            if (nidImageLocalPath) await fs.unlink(nidImageLocalPath);
-            if (selfieLocalPath) await fs.unlink(selfieLocalPath);
-        } catch (cleanupErr) {
-            console.error("Temp file cleanup failed:", cleanupErr);
-        }
-    }
-});
 
 /**
  * @route POST /api/v1/auth/sessions/refresh
@@ -351,9 +297,11 @@ const logoutUser = asyncHandler(async (req: CustomRequest, res: Response) => {
                 refreshToken: 1
             }
         },
-        {
-            new: true
+        { 
+            returnDocument: 'after' 
+
         }
+        
     );
 
     return res.status(200)
@@ -371,7 +319,6 @@ export {
     linkWallet,
     getNonce,
     walletLogin,
-    submitKyc,
     refreshAccessToken,
     logoutUser
 }

@@ -61,7 +61,7 @@ const generateAccessAndRefreshTokens = async(adminId: any) => {
 }
 
 /**
- * @route POST /api/v1/admin/login
+ * @route POST /api/v1/admin/sessions
  * @description Authenticates an admin using email and password.
  */
 const adminLogin = asyncHandler(async (req: Request, res: Response) => {
@@ -95,7 +95,55 @@ const adminLogin = asyncHandler(async (req: Request, res: Response) => {
 })
 
 /**
- * @route POST /api/v1/admin/create
+ * @route GET /api/v1/admin/me
+ * @description Retrieves the currently authenticated admin's details.
+ */
+const getCurrentAdmin = asyncHandler(async (req: AdminRequest, res: Response) => {
+    const adminId = req.admin?._id;
+    if (!adminId) {
+        throw new ApiError(401, "Unauthorized access. Admin id missing.");
+    }
+
+    const currentAdmin = await Admin.findById(adminId).select("-password -refreshToken");
+    if (!currentAdmin) {
+        throw new ApiError(404, "Admin profile not found.");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, currentAdmin, "Current admin fetched successfully")
+    );
+});
+
+/**
+ * @route GET /api/v1/admin/dashboard-stats
+ * @description Fetches summary statistics for the admin dashboard.
+ */
+const getAdminDashboardStats = asyncHandler(async (req: Request, res: Response) => {
+    const [totalUsers, verifiedUsers, pendingKyc, unverifiedUsers, totalAdmins] = await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({ kycStatus: 'verified' }),
+        User.countDocuments({ kycStatus: 'pending' }),
+        User.countDocuments({ kycStatus: 'unverified' }),
+        Admin.countDocuments()
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            users: {
+                total: totalUsers,
+                verified: verifiedUsers,
+                pending: pendingKyc,
+                unverified: unverifiedUsers
+            },
+            admins: {
+                total: totalAdmins
+            }
+        }, "Dashboard statistics fetched successfully")
+    );
+});
+
+/**
+ * @route POST /api/v1/admin/
  * @description Creates a new sub-admin. MUST be protected by isSuperAdmin middleware.
  */
 const createAdmin = asyncHandler(async (req: AdminRequest, res: Response) => {
@@ -126,7 +174,7 @@ const createAdmin = asyncHandler(async (req: AdminRequest, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/admin/refresh-token
+ * @route POST /api/v1/admin/sessions/refresh
  * @description Rotates the refresh token for admins.
  */
 const refreshAdminToken = asyncHandler(async (req: Request, res: Response) => {
@@ -170,7 +218,7 @@ const refreshAdminToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/admin/logout
+ * @route DELETE /api/v1/admin/sessions
  * @description Logs out the admin by clearing cookies and DB token.
  */
 const adminLogout = asyncHandler(async (req: AdminRequest, res: Response) => {
@@ -205,8 +253,8 @@ const getUsers = asyncHandler(async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
 
     const users = await User.find({kycStatus: 'verified'})
-        .select("-refreshToken -nonce")
-        .sort({createdAt: -1})
+        .select("fullName email walletAddress kycVerifiedAt")
+        .sort({kycVerifiedAt: -1})
         .skip(skip)
         .limit(limit);
     
@@ -230,8 +278,8 @@ const getPendingKycUsers = asyncHandler(async (req: Request, res: Response) => {
     const skip = (page - 1) * limit;
 
     const pendingUsers = await User.find({kycStatus: 'pending'})
-        .select("fullName email walletAddress nidNumber nidImageUrl selfieWithNidUrl createdAt")
-        .sort({createdAt: 1})
+        .select("fullName email walletAddress kycSubmittedAt")
+        .sort({kycSubmittedAt: 1})
         .skip(skip)
         .limit(limit);
     
@@ -246,7 +294,7 @@ const getPendingKycUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route POST /api/v1/admin/approve-kyc
+ * @route POST /api/v1/admin/approve-kyc"
  * @description Admin approves KYC. The backend relayer sends a transaction to the Smart Contract.
  */
 const approveKyc = asyncHandler(async (req: Request, res: Response) => {
@@ -259,7 +307,7 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
     const user = await User.findOneAndUpdate(
         { _id: userId, kycStatus: 'pending' },
         { $set: { kycStatus: 'processing' } },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if(!user) {
@@ -282,6 +330,7 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
 
         user.kycStatus = 'verified';
         user.isBlockchainRegistered = true;
+        user.kycVerifiedAt = new Date();
         await user.save({validateBeforeSave: false});
 
         return res.status(200).json(
@@ -324,15 +373,15 @@ const rejectKyc = asyncHandler(async (req: Request, res: Response) => {
     };
 
     try {
-        if (user.nidImageUrl) {
-            const publicId = extractPublicId(user.nidImageUrl);
+        if (user.govIdImageUrl) {
+            const publicId = extractPublicId(user.govIdImageUrl);
             if (publicId) {
                 await deleteFromCloudinary(publicId);
             }
         }
 
-        if (user.selfieWithNidUrl) {
-            const publicId = extractPublicId(user.selfieWithNidUrl);
+        if (user.selfieWithGovIdUrl) {
+            const publicId = extractPublicId(user.selfieWithGovIdUrl);
             if (publicId) {
                 await deleteFromCloudinary(publicId);
             }
@@ -342,9 +391,10 @@ const rejectKyc = asyncHandler(async (req: Request, res: Response) => {
     }
 
     user.kycStatus = 'unverified';
-    user.nidNumber = undefined;
-    user.nidImageUrl = undefined;
-    user.selfieWithNidUrl = undefined;
+    user.governmentId = undefined;
+    user.govIdImageUrl = undefined;
+    user.selfieWithGovIdUrl = undefined;
+    user.kycSubmittedAt = undefined;
 
     await user.save({ validateBeforeSave: false });
 
@@ -357,15 +407,74 @@ const rejectKyc = asyncHandler(async (req: Request, res: Response) => {
     )
 });
 
+/**
+ * @route GET /api/v1/admin/list
+ * @description Retrieves a list of all admins. Strictly for Super Admin.
+ */
+const getAdmins = asyncHandler(async (req: Request, res: Response) => {
+    const admins = await Admin.find()
+        .select("-password -refreshToken")
+        .sort({ createdAt: -1 });
+
+    return res.status(200).json(
+        new ApiResponse(200, { admins, count: admins.length }, "Admin list fetched successfully")
+    );
+});
+
+/**
+ * @route DELETE /api/v1/admin/:id
+ * @description Deletes an admin account. Strictly for Super Admin.
+ */
+const deleteAdmin = asyncHandler(async (req: AdminRequest, res: Response) => {
+    const { id } = req.params;
+
+    if (req.admin?._id.toString() === id) {
+        throw new ApiError(400, "Action denied: You cannot delete your own account.");
+    }
+
+    const deletedAdmin = await Admin.findByIdAndDelete(id);
+    if (!deletedAdmin) {
+        throw new ApiError(404, "Admin not found or already deleted.");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, `Admin ${deletedAdmin.fullName} has been removed successfully.`)
+    );
+});
+
+/**
+ * @route GET /api/v1/admin/users/:id
+ * @description Fetches full profile details of a single user (including KYC docs).
+ */
+const getUserById = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select(
+        "fullName email walletAddress governmentId govIdImageUrl selfieWithGovIdUrl kycSubmittedAt"
+    );
+    if (!user) {
+        throw new ApiError(404, "User not found.");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, user, "User details fetched successfully")
+    );
+});
+
 
 
 export {
     adminLogin,
+    getCurrentAdmin,
+    getAdminDashboardStats,
     createAdmin,
     refreshAdminToken,
     adminLogout,
     getUsers,
     getPendingKycUsers,
     approveKyc,
-    rejectKyc
+    rejectKyc,
+    getAdmins,
+    deleteAdmin,
+    getUserById
 }

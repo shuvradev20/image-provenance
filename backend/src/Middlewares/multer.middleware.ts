@@ -58,6 +58,6 @@ export const uploadLocal = multer({
     storage: diskStorage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024 // 10 MB limit
+        fileSize: 5 * 1024 * 1024 // 5 MB limit
     }
 });
