@@ -2,20 +2,25 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const token = request.cookies.get('accessToken')?.value;
+  const path = request.nextUrl.pathname;
 
-  const { pathname } = request.nextUrl;
+  const userToken = request.cookies.get('accessToken')?.value;
+  const adminToken = request.cookies.get('adminAccessToken')?.value;
 
-  if (pathname.startsWith('/dashboard')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/', request.url));
+  if (path === '/') {
+    if (userToken) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }
 
-  if (pathname === '/') {
-    if (token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+  const isAdminRoute = path.startsWith('/admin') && path !== '/admin/login';
+
+  if (isAdminRoute && !adminToken) {
+    return NextResponse.redirect(new URL('/admin/login', request.url));
+  }
+
+  if (path === '/admin/login' && adminToken) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
   return NextResponse.next();
@@ -25,5 +30,6 @@ export const config = {
   matcher: [
     '/',
     '/dashboard/:path*',
+    '/admin/:path*',
   ],
 };
