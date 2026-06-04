@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import api from "@/lib/axiosInstance";
+import { googleAuthApi, getNonceApi, walletLoginApi, logoutUserApi, linkWalletApi } from "@/lib/api/auth";
+import { getCurrentUserProfileApi } from "@/lib/api/user";
 import { connectToMetaMask, checkAndSwitchNetwork, signWalletLinkMessage, signAuthMessage} from "@/lib/web3";
 
 
@@ -30,6 +31,7 @@ interface AuthState {
     currentActiveWallet: string | null;
     isConnectingWallet: boolean;
     walletError: string | null;
+    setUpdatedUser: (updatedData: Partial<User>) => void;
     loginWithGoogle: (googleData: { email: string; fullName: string; googleId: string }) => Promise<void>;
     loginWithWallet: () => Promise<void>;
     checkAuthSession: () => Promise<void>;
@@ -42,16 +44,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     user: null,
     isAuthenticated: false,
     isLoading: true,
-
     currentActiveWallet: null,
     isConnectingWallet: false,
     walletError: null,
     
+    setUpdatedUser: (updatedData) => set((state) => ({
+        user: state.user ? { ...state.user, ...updatedData } : null
+    })),
+    
     loginWithGoogle: async (googleData) => {
         try {
-            const response = await api.post('/auth/sessions/google', googleData);
+            const response = await googleAuthApi(googleData);
             const userData = response.data.data.user;
-
             const savedWallet = userData.walletAddress || null;
 
             set({ 
@@ -72,26 +76,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
 
         try {
-           const address = await connectToMetaMask();
-           await checkAndSwitchNetwork();
+            const address = await connectToMetaMask();
+            await checkAndSwitchNetwork();
 
-           const nonceResponse = await api.get(`/auth/wallets/${address}/nonce`);
-           const nonce = nonceResponse.data.data.nonce;
-           const signature = await signAuthMessage(nonce);
+            const nonceResponse = await getNonceApi(address);
+            const nonce = nonceResponse.data.data.nonce;
+            const signature = await signAuthMessage(nonce);
 
-           const loginResponse = await api.post('/auth/sessions/wallet', {
+            const loginResponse = await walletLoginApi({
                 walletAddress: address,
                 signature: signature
-           });
+            });
 
-           const userData = loginResponse.data.data.user;
+            const userData = loginResponse.data.data.user;
 
-           set({
-            user: userData,
-            isAuthenticated: true,
-            currentActiveWallet: address,
-            isConnectingWallet: false
-           })
+            set({
+                user: userData,
+                isAuthenticated: true,
+                currentActiveWallet: address,
+                isConnectingWallet: false
+            })
 
         } catch (error: any) {
             console.error("Wallet Login Failed:", error);
@@ -104,7 +108,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     checkAuthSession: async () => {
         try {
-            const response = await api.get('/users/me');
+            const response = await getCurrentUserProfileApi();
             const userData = response.data.data;
             const savedWallet = userData.walletAddress || null;
 
@@ -121,8 +125,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     logout: async () => {
         try {
-            await api.delete('/auth/session');
-            set({ user: null, isAuthenticated: false, currentActiveWallet: null })
+            await logoutUserApi();
+            set({ 
+                user: null, 
+                isAuthenticated: false, 
+                currentActiveWallet: null 
+            })
 
             if (typeof window !== 'undefined') {
                 window.location.href = '/';
@@ -136,11 +144,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const currentUser = get().user;
 
         if(!currentUser || !currentUser.email) {
-            set({walletError: "Please login with Google first."});
+            set({
+                walletError: "Please login with Google first."
+            });
             return;
         }
 
-        set({isConnectingWallet: true, walletError: null});
+        set({
+            isConnectingWallet: true, 
+            walletError: null
+        });
 
         try {
             const address = await connectToMetaMask();
@@ -148,8 +161,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             const timestamp = Date.now();
             const signature = await signWalletLinkMessage(currentUser.email, timestamp);
-
-            const response = await api.put('/auth/users/me/wallet', {
+            const response = await linkWalletApi({
                 walletAddress: address,
                 signature: signature,
                 timestamp: timestamp
