@@ -230,7 +230,7 @@ const adminLogout = asyncHandler(async (req: AdminRequest, res: Response) => {
             }
         },
         {
-            new: true
+            returnDocument: 'after'
         }
     );
 
@@ -412,12 +412,23 @@ const rejectKyc = asyncHandler(async (req: Request, res: Response) => {
  * @description Retrieves a list of all admins. Strictly for Super Admin.
  */
 const getAdmins = asyncHandler(async (req: Request, res: Response) => {
+    const page = Math.max(parseInt(req.query.page as string, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string, 10) || 10, 40);
+    const skip = (page - 1) * limit;
+
     const admins = await Admin.find()
         .select("-password -refreshToken")
-        .sort({ createdAt: -1 });
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    const totalAdmins = await Admin.countDocuments();
 
     return res.status(200).json(
-        new ApiResponse(200, { admins, count: admins.length }, "Admin list fetched successfully")
+        new ApiResponse(200, { 
+            admins, 
+            pagination: { totalAdmins, currentPage: page, limit }
+        }, "Admin list fetched successfully")
     );
 });
 

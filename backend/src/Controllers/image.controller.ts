@@ -43,9 +43,8 @@ interface IConfirmMintPayload {
 }
 
 
-
 /**
- * @route POST /api/v1/images/register-pre-mint
+ * @route POST /api/v1/images/drafts
  * @description Processes image, injects watermark, uploads to Cloudinary & IPFS, 
  * and returns the exact payload needed for the MetaMask transaction.
  */
@@ -203,7 +202,7 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
 });
 
 /**
- * @route POST /api/v1/images/confirm-mint
+ * @route POST /api/v1/images/
  * @description Saves the finalized image data to MongoDB AFTER a successful blockchain transaction.
  */
 const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response) => {
@@ -308,7 +307,7 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
 });
 
 /**
- * @route GET /api/v1/images/explore
+ * @route GET /api/v1/images/
  * @description Public API for dashboard cards. Returns ONLY essential Web2 data for fast loading.
  * Implements Pagination and ensures burned images are excluded.
  */
@@ -350,7 +349,7 @@ const getAllImages = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/images/my-assets
+ * @route GET /api/v1/images/me
  * @description Returns ONLY essential card data for the user's dashboard.
  */
 const getMyImages = asyncHandler(async (req: Request, res: Response) => {
@@ -402,7 +401,7 @@ const getMyImages = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * @route GET /api/v1/images/details/:hash
+ * @route GET /api/v1/images/:hash
  * @description Fetches detailed provenance data for a specific image by its unique hash.
  * This is a public route, but it provides ownership context if a viewerWallet is passed.
  * Supports decentralized transparency by providing direct IPFS gateway links.
