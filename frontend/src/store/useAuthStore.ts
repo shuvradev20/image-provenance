@@ -3,7 +3,6 @@ import { googleAuthApi, getNonceApi, walletLoginApi, logoutUserApi, linkWalletAp
 import { getCurrentUserProfileApi } from "@/lib/api/user";
 import { connectToMetaMask, checkAndSwitchNetwork, signWalletLinkMessage, signAuthMessage} from "@/lib/web3";
 
-
 interface User {
     _id: string;
     fullName?: string;
@@ -55,7 +54,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     loginWithGoogle: async (googleData) => {
         try {
             const response = await googleAuthApi(googleData);
-            const userData = response.data.data.user;
+            
+            // FIX: response is already ApiResponse, so we access .data.user
+            const userData = response.data.user; 
             const savedWallet = userData.walletAddress || null;
 
             set({ 
@@ -67,7 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             console.error("Google Login Failed:", error);
             throw error;
         }
-    },
+    },    
 
     loginWithWallet: async () => {
         set({
@@ -80,7 +81,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             await checkAndSwitchNetwork();
 
             const nonceResponse = await getNonceApi(address);
-            const nonce = nonceResponse.data.data.nonce;
+            // FIX: Corrected path to nonce
+            const nonce = nonceResponse.data.nonce; 
+            
             const signature = await signAuthMessage(nonce);
 
             const loginResponse = await walletLoginApi({
@@ -88,7 +91,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 signature: signature
             });
 
-            const userData = loginResponse.data.data.user;
+            // FIX: Corrected path to user
+            const userData = loginResponse.data.user;
 
             set({
                 user: userData,
@@ -109,7 +113,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     checkAuthSession: async () => {
         try {
             const response = await getCurrentUserProfileApi();
-            const userData = response.data.data;
+            // FIX: Depending on user profile API, it's usually response.data or response.data.user
+            const userData = response.data.user || response.data; 
             const savedWallet = userData.walletAddress || null;
 
             set({ 
@@ -161,6 +166,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
             const timestamp = Date.now();
             const signature = await signWalletLinkMessage(currentUser.email, timestamp);
+            
             const response = await linkWalletApi({
                 walletAddress: address,
                 signature: signature,
@@ -172,7 +178,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isConnectingWallet: false,
                 user: {
                     ...currentUser,
-                    walletAddress: response.data.data.walletAddress
+                    // FIX: Corrected path to walletAddress
+                    walletAddress: response.data.walletAddress 
                 }
             })
         } catch (error: any) {

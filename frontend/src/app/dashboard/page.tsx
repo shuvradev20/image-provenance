@@ -1,8 +1,6 @@
 export default function DashboardHome() {
-  // YouTube-style filter pills er jonno categories
   const categories = ['All Assets', 'Verified ✅', 'Pending ⏳', 'Flagged ⚠️', 'Recent Mints'];
 
-  // Gallery grid er jonno dummy data count
   const dummyAssets = [1, 2, 3, 4, 5, 6, 7, 8];
 
   return (
