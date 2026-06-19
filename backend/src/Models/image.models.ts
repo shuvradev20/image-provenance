@@ -2,6 +2,13 @@ import mongoose, { Schema, type Document } from "mongoose";
 
 // --- Image Provenance Interface ---
 
+export interface IHistory {
+    action: 'minted' | 'metadata_updated' | 'transferred' | 'burned';
+    actor: string;
+    timestamp: Date;
+    transactionHash: string
+}
+
 /**
  * @interface IImage
  * @description Represents the digital provenance and metadata of an image.
@@ -9,7 +16,7 @@ import mongoose, { Schema, type Document } from "mongoose";
  * ensuring every image has a verifiable history.
  */
 export interface IImage extends Document {
-    uploader: mongoose.Types.ObjectId;
+    uploader: String;
     currentOwner: string;
     title: string;
     description: string;
@@ -29,13 +36,14 @@ export interface IImage extends Document {
     originalAssetHash: string;
     transactionHash?: string;
     status: 'pending' | 'verified' | 'burned';
+    history: IHistory[];
 }
 
 const imageSchema = new Schema<IImage>({
     uploader: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
+        type: String,
         required: true,
+        trim: true,
         index: true
     },
     currentOwner: {
@@ -111,7 +119,25 @@ const imageSchema = new Schema<IImage>({
         type: String,
         enum: ['pending', 'verified', 'burned'],
         default: 'pending'
-    }
+    },
+    history: [{
+        action: { 
+            type: String, 
+            required: true 
+        },
+        actor: { 
+            type: String, 
+            required: true 
+        },
+        timestamp: { 
+            type: Date, 
+            required: true 
+        },
+        transactionHash: { 
+        type: String, 
+        required: true 
+        }
+    }]
 }, { timestamps: true });
 
 export const Image = mongoose.model<IImage>("Image", imageSchema);

@@ -3,25 +3,29 @@ import {
     uploadAndGenerateProvenance,
     confirmAndRegisterImage,
     getAllImages,
-    getMyImages,
-    getImageByHash 
+    getImageByHash,
+    prepareMetadataUpdate,
+    confirmImageBurn,
+    confirmImageTransfer,
+    confirmMetadataUpdate
 } from "../Controllers/image.controller.js";
 import { verifyJWT } from "../Middlewares/auth.middleware.js";
 import { uploadMemory } from "../Middlewares/multer.middleware.js";
 
 const router = Router();
 
+router.route("/").get(getAllImages);
+router.route("/:hash").get(getImageByHash);
+router.use(verifyJWT);
 router.route("/drafts").post(
-    verifyJWT,
     uploadMemory.single("image"), 
     uploadAndGenerateProvenance
 );
-router.route("/").post(
-    verifyJWT,
-    confirmAndRegisterImage
-);
-router.route("/").get(getAllImages);
-router.route("/me").get(verifyJWT, getMyImages);
-router.route("/:hash").get(getImageByHash);
+router.route("/").post(confirmAndRegisterImage);
+router.route("/:hash/metadata/draft").post(prepareMetadataUpdate);
+router.route("/:hash/metadata/confirm").patch(confirmMetadataUpdate);
+router.route("/:hash/transfer").patch(confirmImageTransfer);
+router.route("/:hash/burn").patch(confirmImageBurn);
+
 
 export default router;
