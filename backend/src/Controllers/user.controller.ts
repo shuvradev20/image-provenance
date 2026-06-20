@@ -72,22 +72,22 @@ const getUserPublicProfile = asyncHandler(async (req: Request, res: Response) =>
     const searchWallet = walletAddress.toLowerCase();
 
     const userProfile = await User.findOne({ walletAddress: searchWallet })
-        .select("fullName walletAddress bio profileImage coverImage location socialLinks isBlockchainRegistered createdAt");
+        .select("fullName walletAddress bio profileImage coverImage location socialLinks isBlockchainRegistered kycStatus createdAt");
     
     if (!userProfile) {
         throw new ApiError(404, "User not found");
     }
 
+    // TypeScript ke strict vabe bole deya hocche je status exactly 'verified' hobe
     const imageQuery = {
-        uploader: userProfile._id,
-        status: 'verified',
-        isBurned: false
+        currentOwner: userProfile.walletAddress!,
+        status: 'verified' 
     };
 
-    // Parallel execution for high-speed data retrieval
     const [totalImages, userImages] = await Promise.all([
         Image.countDocuments(imageQuery),
         Image.find(imageQuery)
+            .select('title currentOwner assetCategory thumbnailUrl imageHash createdAt')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
