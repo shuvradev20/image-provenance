@@ -3,19 +3,20 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  Compass, 
-  UserCircle,
+  LayoutGrid, 
+  Globe, // Showcase er jonno
   ShieldCheck, 
   Activity, 
   Settings, 
   Plus 
 } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
+import { useAuthStore } from '@/store/useAuthStore'; 
 import { cn } from '@/lib/utils';
 
-const menuItems = [
-  { name: 'Explore', icon: Compass, path: '/dashboard/explore' },
-  { name: 'My Profile', icon: UserCircle, path: '/dashboard/profile' },
+const baseMenuItems = [
+  { name: 'Explore', icon: LayoutGrid, path: '/dashboard' },
+  { name: 'Showcase', icon: Globe, path: '/dashboard/showcase' }, 
   { name: 'Verify', icon: ShieldCheck, path: '/dashboard/verify' },
   { name: 'Activity', icon: Activity, path: '/dashboard/activity' },
   { name: 'Settings', icon: Settings, path: '/dashboard/settings' },
@@ -24,19 +25,28 @@ const menuItems = [
 export function Sidebar() {
   const { isSidebarOpen } = useUIStore();
   const pathname = usePathname();
+  const { user } = useAuthStore(); 
+
+  const menuItems = baseMenuItems.map((item) => {
+    if (item.name === 'Showcase') {
+      return { ...item, path: `/dashboard/showcase/${user?.walletAddress || ''}` };
+    }
+    return item;
+  });
 
   const mobileMenuItems = [
-    menuItems[0], 
-    menuItems[2],
-    menuItems[3], 
-    menuItems[4], 
+    menuItems[0], // Explore
+    menuItems[1], // Showcase
+    menuItems[3], // Activity
+    menuItems[4], // Settings
   ];
 
   return (
     <>
+      {/* --- DESKTOP SIDEBAR --- */}
       <aside
         className={cn(
-          "hidden md:flex h-screen bg-background border-r border-border flex-col sticky top-0 shrink-0",
+          "hidden md:flex min-h-screen bg-background border-r border-border flex-col sticky top-0 shrink-0",
           isSidebarOpen ? "w-64" : "w-18"
         )}
       >
@@ -56,9 +66,15 @@ export function Sidebar() {
 
         <div className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
-            const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+            // FIX APPLIED HERE: Showcase er jonno ekdom exact match check kora hocche
+            const isActive = item.name === 'Explore' 
+              ? pathname === '/dashboard' 
+              : item.name === 'Showcase'
+                ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+                : pathname === item.path || pathname.startsWith(`${item.path}/`);
+              
             return (
-              <Link key={item.path} href={item.path}>
+              <Link key={item.name} href={item.path}>
                 <div
                   className={cn(
                     "flex items-center rounded-lg cursor-pointer group relative",
@@ -84,12 +100,19 @@ export function Sidebar() {
         </div>
       </aside>
 
+      {/* --- MOBILE NAV --- */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-16">
         
         {mobileMenuItems.slice(0, 2).map((item) => {
-          const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+          // FIX APPLIED HERE TOO
+          const isActive = item.name === 'Explore' 
+            ? pathname === '/dashboard' 
+            : item.name === 'Showcase'
+              ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+              : pathname === item.path || pathname.startsWith(`${item.path}/`);
+            
           return (
-            <Link key={item.path} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
+            <Link key={item.name} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
               <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")} />
               <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
                 {item.name}
@@ -105,9 +128,15 @@ export function Sidebar() {
         </Link>
 
         {mobileMenuItems.slice(2, 4).map((item) => {
-          const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+          // FIX APPLIED HERE TOO
+          const isActive = item.name === 'Explore' 
+            ? pathname === '/dashboard' 
+            : item.name === 'Showcase'
+              ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+              : pathname === item.path || pathname.startsWith(`${item.path}/`);
+            
           return (
-            <Link key={item.path} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
+            <Link key={item.name} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
               <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")} />
               <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
                 {item.name}
