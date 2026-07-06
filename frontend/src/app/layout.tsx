@@ -18,6 +18,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ProveNode - Secure Image Provenance",
   description: "Protect your digital copyrights and verify content authenticity",
+
+  icons: {
+    icon: [
+      { media: '(prefers-color-scheme: light)', url: '/logo_dark.svg', type: 'image/svg+xml' },
+      { media: '(prefers-color-scheme: dark)', url: '/logo_light.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({

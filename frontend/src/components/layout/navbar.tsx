@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { ProveNodeLogoLight, ProveNodeLogoDark } from '@/components/icons/ProveNodeLogo'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,7 +11,6 @@ export function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // 50px er beshi scroll hole navbar upore chole jabe
       if (window.scrollY > 50) {
         setIsScrolled(true)
       } else {
@@ -35,8 +35,10 @@ export function Navbar() {
         }`}>
         <nav className="w-full max-w-4xl bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-full px-6 py-3.5 flex items-center justify-between shadow-lg dark:shadow-2xl transition-colors duration-300">
           
-          <div className="flex items-center gap-2">
-            <Link href="/" className="text-black dark:text-white font-semibold text-xl tracking-tight transition-colors">
+         <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 text-black dark:text-white font-semibold text-xl tracking-tight transition-colors">
+              <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
+              <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
               ProveNode
             </Link>
           </div>
@@ -75,10 +77,13 @@ export function Navbar() {
         }`}
       >
         <div className="flex items-center justify-between pt-10 pb-6 px-8 border-b border-gray-200 dark:border-white/10">
-
-          <span className="text-xl font-bold text-black dark:text-white tracking-tight">
-            ProveNode
-          </span>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 text-black dark:text-white font-semibold text-xl tracking-tight transition-colors">
+              <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
+              <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
+              ProveNode
+            </Link>
+          </div>
 
           <button onClick={() => setIsOpen(false)} className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white bg-gray-100 dark:bg-white/5 p-2 rounded-full transition-colors">
             <X className="w-5 h-5" />
