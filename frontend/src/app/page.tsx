@@ -1,13 +1,13 @@
 import { HeroBackground } from "@/components/ui/hero-background.";
 import { Navbar } from "@/components/layout/navbar";
-import { Hero } from "@/components/sections/hero";
+import { Hero } from "@/components/sections/landing-page/hero";
 import { HowItWorksBackground } from "@/components/ui/how-it-works-background";
-import { HowItWorks } from "@/components/sections/how-it-works";
-import { Problems } from "@/components/sections/problems";
-import FAQ from "@/components/sections/faqs";
+import { HowItWorks } from "@/components/sections/landing-page/how-it-works";
+import { Problems } from "@/components/sections/landing-page/problems";
+import FAQ from "@/components/sections/landing-page/faqs";
 import { Footer7 } from "@/components/ui/footer";
 import { FeatureBackground } from "@/components/ui/feature-background";
-import { Feature } from "@/components/sections/feature";
+import { Feature } from "@/components/sections/landing-page/feature";
 
 export default function Home() {
   return (

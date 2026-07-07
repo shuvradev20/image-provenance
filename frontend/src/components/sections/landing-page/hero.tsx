@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
-import { AuthModal } from "../ui/auth-modal";
+import { AuthModal } from "@/components/sections/auth/auth-modal";
 
 export function Hero() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
