@@ -41,20 +41,15 @@ const generateGradient = (address: string) => {
 
 export const AssetCard = ({ asset }: AssetCardProps) => {
   const router = useRouter();
-
-  // Profile a jaoar click handler
   const handleProfileClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Parent Link er kaaj bondho korbe
-    e.stopPropagation(); // Event ke upore jete dibe na
+    e.preventDefault();
+    e.stopPropagation();
     router.push(`/dashboard/showcase/${asset.currentOwner}`);
   };
 
   return (
     <Link href={`/dashboard/asset/${asset.imageHash}`}>
-      {/* Main Container */}
       <div className="group relative overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/40 transition-all duration-300 hover:border-zinc-700/80 hover:bg-zinc-900/40 cursor-pointer h-full flex flex-col hover:shadow-[0_0_20px_rgba(255,255,255,0.02)]">
-        
-        {/* Image Section */}
         <div className="relative w-full aspect-square bg-zinc-900 border-b border-zinc-800/50">
           <img
             src={asset.thumbnailUrl}
@@ -62,7 +57,6 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             loading="lazy"
           />
-          {/* Glassmorphism Category Badge */}
           <div className="absolute top-3 right-3 z-10">
             <Badge variant="outline" className="bg-black/50 backdrop-blur-md border-white/10 text-white/90 text-[10px] font-medium px-2.5 py-0.5 tracking-wide uppercase">
               {asset.assetCategory.replace('_', ' ')}
@@ -70,16 +64,12 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="px-4 pb-6 pt-3 flex flex-col flex-grow justify-between gap-3">
+        <div className="px-4 pb-6 pt-3 flex flex-col grow justify-between gap-3">
           <h3 className="font-semibold text-[15px] text-zinc-100 truncate leading-tight group-hover:text-white transition-colors">
             {asset.title}
           </h3>
 
-          {/* Footer / Meta data */}
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-zinc-700/70">
-            
-            {/* Wallet Address area jeta ekhon clickable */}
             <div 
               onClick={handleProfileClick}
               className="flex items-center gap-2 min-w-0 relative z-10 group/wallet"
@@ -101,7 +91,6 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
             </div>
           </div>
         </div>
-
       </div>
     </Link>
   );

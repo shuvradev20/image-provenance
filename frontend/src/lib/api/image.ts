@@ -75,3 +75,8 @@ export const confirmImageBurnApi = async (hash: string, payload: {
     const response = await api.patch(`/images/${hash}/burn`, payload);
     return response.data;
 };
+
+export const searchAssetsApi = async (query: string) => {
+    const response = await api.get(`/images/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+};
