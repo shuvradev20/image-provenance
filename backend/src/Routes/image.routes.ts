@@ -7,7 +7,8 @@ import {
     prepareMetadataUpdate,
     confirmImageBurn,
     confirmImageTransfer,
-    confirmMetadataUpdate
+    confirmMetadataUpdate,
+    searchImages
 } from "../Controllers/image.controller.js";
 import { verifyJWT } from "../Middlewares/auth.middleware.js";
 import { uploadMemory } from "../Middlewares/multer.middleware.js";
@@ -15,6 +16,7 @@ import { uploadMemory } from "../Middlewares/multer.middleware.js";
 const router = Router();
 
 router.route("/").get(getAllImages);
+router.route("/search").get(searchImages);
 router.route("/:hash").get(getImageByHash);
 router.use(verifyJWT);
 router.route("/drafts").post(

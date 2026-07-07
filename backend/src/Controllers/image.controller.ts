@@ -878,6 +878,36 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+/**
+ * @route GET /api/v1/images/search
+ * @description Search for images based on title, description, category, or tags.
+ */
+const searchImages = asyncHandler(async (req: Request, res: Response) => {
+    const {q} = req.query;
+
+    if(!q || typeof q !== 'string' || q.trim() ==="") {
+        throw new ApiError(400, "Search query (q) is required");
+    }
+
+    const searchRegex = new RegExp(q as string, 'i');
+
+    const results = await Image.find({
+        status: 'verified',
+        $or: [
+            { title: { $regex: searchRegex } },
+            { assetCategory: { $regex: searchRegex } },
+            { tags: { $regex: searchRegex } }
+        ]
+    })
+    .select('title currentOwner assetCategory thumbnailUrl imageHash createdAt')
+    .sort({ createdAt: -1 })
+    .limit(12);
+
+    return res.status(200).json(
+        new ApiResponse(200, results, "Search results fetched successfully.")
+    );
+})
+
 
 
 export {
@@ -887,7 +917,8 @@ export {
     getImageByHash,
     prepareMetadataUpdate,
     confirmMetadataUpdate,
-    confirmImageBurn
+    confirmImageBurn,
+    searchImages
 }
 
 
