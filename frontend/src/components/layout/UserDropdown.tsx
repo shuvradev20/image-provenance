@@ -36,9 +36,9 @@ export function UserDropdown() {
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-center gap-2 bg-secondary/50 border hover:bg-secondary/80 hover:border-border transition-all cursor-pointer shadow-sm rounded-full",
+          "flex items-center justify-center gap-2 bg-background transition-all cursor-pointer rounded-full",
           "w-9 h-9 p-0 md:w-auto md:h-auto md:px-3 md:py-1.5",
-          isOpen ? "border-primary/50 ring-2 ring-primary/20" : "border-border/50"
+          isOpen ? "border border-gray-400 dark:border-neutral-200" : "border border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-400"
         )}
       >
         <div className="w-6 h-6 md:w-5 md:h-5 rounded-full bg-linear-to-tr from-[#f58320] via-[#c6307e] to-[#4527a0] shrink-0 shadow-inner" />
@@ -48,7 +48,7 @@ export function UserDropdown() {
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-56 p-1 bg-background border border-border rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+        <div className="absolute right-0 mt-3 w-56 p-1 bg-white dark:bg-[#1C1C1C] border border-border rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
           <Link
             href="/dashboard/profile"
             onClick={() => setIsOpen(false)}

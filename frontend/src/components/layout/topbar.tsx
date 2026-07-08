@@ -35,7 +35,7 @@ export function Topbar() {
       )}
 
       <header className={cn(
-        "h-16 border-b border-border bg-background/80 backdrop-blur-md fixed w-full z-40 flex items-center justify-between px-4 transition-all duration-300",
+        "h-16 bg-white/90 dark:bg-[#1C1C1C]/90 border-b border-border backdrop-blur-md fixed w-full z-40 flex items-center justify-between px-4 transition-all duration-300",
         isWalletMismatch ? "top-10" : "top-0"
       )}>
         <div className="flex items-center gap-3 w-auto md:w-64">
@@ -50,7 +50,7 @@ export function Topbar() {
           <Link href="/dashboard" className="flex items-center gap-2">
             <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
             <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
-            <span className="font-bold text-xl tracking-tight">ProveNode</span>
+            <span className="font-bold text-xl tracking-tight text-foreground">ProveNode</span>
           </Link>
         </div>
 
@@ -59,7 +59,7 @@ export function Topbar() {
         <div className="flex items-center sm:px-1 gap-2 md:gap-5 relative">
           <button
             onClick={() => setIsMobileSearchOpen(true)}
-            className="md:hidden p-2 rounded-full hover:bg-muted transition-colors"
+            className="md:hidden p-2 rounded-full hover:bg-muted transition-colors "
           >
             <Search className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -71,9 +71,9 @@ export function Topbar() {
               onClick={linkWalletBackend}
               disabled={isConnectingWallet}
               className={cn(
-                "flex items-center gap-2 bg-primary text-primary-foreground rounded-full transition-all font-medium",
-                "p-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2 text-sm",
-                isConnectingWallet ? "opacity-70 cursor-not-allowed" : "hover:bg-primary/90 shadow-sm"
+                "flex items-center justify-center gap-2 border bg-black text-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 rounded-full transition-all font-medium",
+                "p-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2 text-sm text-neutral-300",
+                isConnectingWallet ? "opacity-70 cursor-not-allowed" : "hover:opacity-90 dark:hover:border-neutral-500 shadow-sm"
               )}
             >
               {isConnectingWallet ? (

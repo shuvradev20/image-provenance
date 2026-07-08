@@ -45,7 +45,7 @@ export function SearchArea({ isMobileSearchOpen, setIsMobileSearchOpen }: Search
     <>
       <div className="hidden md:flex flex-1 max-w-xl mx-3 group">
         <div className="flex items-stretch w-full h-10">
-          <div className="flex-1 flex items-center border border-border bg-background rounded-l-full focus-within:border-black dark:focus-within:border-gray-400 transition-all overflow-hidden">
+          <div className="flex-1 flex items-center border border-gray-300 dark:border-neutral-700 bg-background rounded-l-full focus-within:border-black dark:focus-within:border-gray-400 transition-all overflow-hidden z-10">
           <input
             type="text"
             value={searchQuery}
@@ -66,7 +66,7 @@ export function SearchArea({ isMobileSearchOpen, setIsMobileSearchOpen }: Search
           </div>
           <button
             onClick={handleSearch}
-            className="h-full px-6 bg-muted/50 hover:bg-muted border border-l-0 border-border rounded-r-full flex items-center justify-center transition-colors group/btn cursor-pointer"
+            className="h-full px-6 bg-muted/50 hover:bg-muted border border-gray-300 dark:border-neutral-700 border-l-0 rounded-r-full flex items-center justify-center transition-colors group/btn cursor-pointer"
           >
             <Search className="w-5 h-5 text-muted-foreground group-hover/btn:text-foreground" />
           </button>
@@ -77,7 +77,7 @@ export function SearchArea({ isMobileSearchOpen, setIsMobileSearchOpen }: Search
       {isMobileSearchOpen && (
         <div className="md:hidden fixed inset-0 bg-background z-60 flex flex-col animate-in fade-in zoom-in-95 duration-200">
           <div className="p-3 pt-4">
-            <div className="relative flex items-center bg-muted/40 border border-border/50 rounded-full focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
+            <div className="relative flex items-center bg-muted/40 border border-border rounded-full focus-within:border-black dark:focus-within:border-gray-400 transition-all">
               <Search 
                 className="absolute left-4 w-5 h-5 text-muted-foreground shrink-0 cursor-pointer" 
                 onClick={handleSearch}
