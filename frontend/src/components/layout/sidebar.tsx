@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutGrid, 
-  Globe, // Showcase er jonno
+  Globe,
   ShieldCheck, 
   Activity, 
   Settings, 
@@ -35,18 +35,17 @@ export function Sidebar() {
   });
 
   const mobileMenuItems = [
-    menuItems[0], // Explore
-    menuItems[1], // Showcase
-    menuItems[3], // Activity
-    menuItems[4], // Settings
+    menuItems[0], 
+    menuItems[1], 
+    menuItems[3], 
+    menuItems[4], 
   ];
 
   return (
     <>
-      {/* --- DESKTOP SIDEBAR --- */}
       <aside
         className={cn(
-          "hidden md:flex min-h-screen bg-background border-r border-border flex-col sticky top-0 shrink-0",
+          "hidden md:flex h-screen shrink-0 bg-white dark:bg-[#1C1C1C] border-r border-border flex-col transition-colors duration-300",
           isSidebarOpen ? "w-64" : "w-18"
         )}
       >
@@ -66,22 +65,21 @@ export function Sidebar() {
 
         <div className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
-            // FIX APPLIED HERE: Showcase er jonno ekdom exact match check kora hocche
             const isActive = item.name === 'Explore' 
               ? pathname === '/dashboard' 
               : item.name === 'Showcase'
-                ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+                ? pathname === item.path 
                 : pathname === item.path || pathname.startsWith(`${item.path}/`);
               
             return (
               <Link key={item.name} href={item.path}>
                 <div
                   className={cn(
-                    "flex items-center rounded-lg cursor-pointer group relative",
+                    "flex items-center rounded-lg cursor-pointer group relative transition-colors",
                     isSidebarOpen ? "py-2.5 px-3" : "w-10 h-10 mx-auto justify-center",
                     isActive 
                       ? "bg-secondary text-foreground"
-                      : "text-muted-foreground  hover:bg-secondary/90 dark:hover:bg-secondary/50 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-muted dark:hover:bg-secondary/50 hover:text-foreground"
                   )}
                 >
                   {isActive && (
@@ -100,15 +98,13 @@ export function Sidebar() {
         </div>
       </aside>
 
-      {/* --- MOBILE NAV --- */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-16">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#1C1C1C]/90 backdrop-blur-md border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-16 transition-colors duration-300">
         
         {mobileMenuItems.slice(0, 2).map((item) => {
-          // FIX APPLIED HERE TOO
           const isActive = item.name === 'Explore' 
             ? pathname === '/dashboard' 
             : item.name === 'Showcase'
-              ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+              ? pathname === item.path
               : pathname === item.path || pathname.startsWith(`${item.path}/`);
             
           return (
@@ -132,7 +128,7 @@ export function Sidebar() {
           const isActive = item.name === 'Explore' 
             ? pathname === '/dashboard' 
             : item.name === 'Showcase'
-              ? pathname === item.path // <-- Shudhu nijer wallet holei active hobe!
+              ? pathname === item.path 
               : pathname === item.path || pathname.startsWith(`${item.path}/`);
             
           return (
