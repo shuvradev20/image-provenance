@@ -25,7 +25,6 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Pagination states
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [fetchingMore, setFetchingMore] = useState(false);
@@ -36,10 +35,7 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
       else setFetchingMore(true);
       setError(null);
 
-      // Backend API Call
       const response = await getUserPublicProfileApi(walletAddress, pageNum, 12);
-      
-      // Tomar ApiResponse backend structure onujayi data extract kora
       const payload = response.data; 
 
       if (!isLoadMore) {
@@ -53,7 +49,6 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
     } catch (err: any) {
       console.error("Failed to load showcase data:", err);
-      // 404 hole user not found error dekhabo
       if (err?.response?.status === 404) {
         setError("User profile not found.");
       } else {
@@ -82,18 +77,14 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
   if (loading) {
     return (
       <div className="w-full space-y-12 pb-10">
-        {/* Hero Card Skeleton */}
-        <div className="w-full h-[350px] rounded-2xl bg-zinc-900/40 animate-pulse border border-zinc-800/50"></div>
+        <div className="w-full h-87.5 rounded-2xl bg-zinc-900/40 animate-pulse border border-zinc-800/50"></div>
 
-        {/* Bottom Section: Assets Skeleton */}
         <div className="space-y-6">
-          {/* Header Skeleton */}
           <div className="flex items-center justify-between border-b border-zinc-800/50 pb-4">
             <div className="h-8 w-48 bg-zinc-800/60 rounded animate-pulse"></div>
             <div className="h-7 w-20 bg-zinc-800/60 rounded-full animate-pulse"></div>
           </div>
 
-          {/* Skeleton Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <AssetCardSkeleton key={i} />
@@ -117,8 +108,6 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
   return (
     <div className="w-full space-y-12 pb-10">
-      
-      {/* Top Section: Read-Only Hero Card */}
         <PublicHeroCard 
             fullName={profile.fullName}
             bio={profile.bio}
@@ -129,7 +118,6 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
             profileImage={profile.profileImage} 
         />
 
-      {/* Bottom Section: Asset Gallery */}
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-zinc-800/50 pb-4">
           <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">
@@ -152,14 +140,13 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
               ))}
             </div>
 
-            {/* Load More Button */}
             {pagination?.hasNextPage && (
-              <div className="flex justify-center pt-8">
+              <div className="flex justify-center py-2 mb-8 sm:mb-0">
                 <Button 
-                  variant="secondary" 
+                  variant="outline" 
                   onClick={handleLoadMore} 
                   disabled={fetchingMore}
-                  className="min-w-[150px]"
+                  className="cursor-pointer rounded-full px-6 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-30"
                 >
                   {fetchingMore ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />

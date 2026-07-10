@@ -22,7 +22,7 @@ interface AssetCardProps {
 
 const truncateAddress = (address: string) => {
   if (!address) return "";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
 };
 
 const generateGradient = (address: string) => {
@@ -49,8 +49,8 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
 
   return (
     <Link href={`/dashboard/asset/${asset.imageHash}`}>
-      <div className="group relative overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/40 transition-all duration-300 hover:border-zinc-700/80 hover:bg-zinc-900/40 cursor-pointer h-full flex flex-col hover:shadow-[0_0_20px_rgba(255,255,255,0.02)]">
-        <div className="relative w-full aspect-square bg-zinc-900 border-b border-zinc-800/50">
+      <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 transition-all duration-300 hover:border-gray-300 hover:shadow-md dark:hover:border-zinc-700 dark:hover:bg-zinc-900 cursor-pointer h-full flex flex-col dark:hover:shadow-[0_0_20px_rgba(255,255,255,0.02)]">
+        <div className="relative w-full aspect-square bg-gray-50 dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
           <img
             src={asset.thumbnailUrl}
             alt={asset.title}
@@ -65,25 +65,25 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
         </div>
 
         <div className="px-4 pb-6 pt-3 flex flex-col grow justify-between gap-3">
-          <h3 className="font-semibold text-[15px] text-zinc-100 truncate leading-tight group-hover:text-white transition-colors">
+          <h3 className="font-semibold text-[15px] text-gray-900 dark:text-zinc-100 truncate leading-tight group-hover:text-primary transition-colors">
             {asset.title}
           </h3>
 
-          <div className="flex items-center justify-between mt-auto pt-3 border-t border-zinc-700/70">
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-200 dark:border-zinc-800">
             <div 
               onClick={handleProfileClick}
               className="flex items-center gap-2 min-w-0 relative z-10 group/wallet"
             >
               <div 
-                className="w-5 h-5 rounded-full shadow-sm shrink-0 border border-zinc-700/50"
+                className="w-5 h-5 rounded-full shadow-sm shrink-0 border border-gray-200 dark:border-zinc-700"
                 style={{ background: generateGradient(asset.currentOwner) }}
               />
-              <span className="font-medium text-zinc-400 text-xs font-mono truncate group-hover/wallet:text-zinc-200 transition-colors">
+              <span className="font-medium text-gray-500 dark:text-zinc-400 text-xs group-hover/wallet:text-gray-900 dark:group-hover/wallet:text-zinc-200 whitespace-nowrap transition-colors">
                 {truncateAddress(asset.currentOwner)}
               </span>
             </div>
             
-            <div className="flex items-center text-zinc-500 text-[10px] shrink-0 ml-2">
+            <div className="flex items-center text-gray-400 dark:text-zinc-500 text-[10px] shrink-0 ml-2">
               <Clock className="w-3 h-3 mr-1 opacity-70" />
               <span className="whitespace-nowrap">
                 {formatDistanceToNow(new Date(asset.createdAt))} ago

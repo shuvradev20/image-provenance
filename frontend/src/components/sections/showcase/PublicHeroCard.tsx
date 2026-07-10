@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, ShieldAlert, Clock, Copy, Check, MapPin } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Clock, Copy, CopyCheck, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -11,8 +11,8 @@ export interface PublicProfileProps {
   location?: string;
   kycStatus?: "unverified" | "pending" | "processing" | "verified";
   walletAddress: string;
-  coverImage?: string;   
-  profileImage?: string; 
+  coverImage?: string;
+  profileImage?: string;
 }
 
 export function PublicHeroCard({
@@ -27,13 +27,6 @@ export function PublicHeroCard({
   const [isCopied, setIsCopied] = useState(false);
   const userInitial = fullName.charAt(0).toUpperCase();
 
-  // Wallet Address truncate korar helper
-  const truncateAddress = (address: string) => {
-    if (!address) return "";
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  // Copy to clipboard logic
   const handleCopyWallet = async () => {
     if (!walletAddress) return;
     try {
@@ -51,39 +44,34 @@ export function PublicHeroCard({
     return <ShieldAlert className="w-4 h-4" />;
   };
 
-  const badgeColor = 
-    kycStatus === "verified" ? "text-green-500 border-green-500/30 bg-green-500/10" : 
-    kycStatus === "pending" || kycStatus === "processing" ? "text-yellow-500 border-yellow-500/30 bg-yellow-500/10" :
-    "text-red-500 border-red-500/30 bg-red-500/10";
+  const badgeColor =
+    kycStatus === "verified" ? "text-green-600 border-green-200 bg-green-50 dark:text-green-500 dark:border-green-500/30 dark:bg-green-500/10" :
+    kycStatus === "pending" || kycStatus === "processing" ? "text-yellow-600 border-yellow-200 bg-yellow-50 dark:text-yellow-500 dark:border-yellow-500/30 dark:bg-yellow-500/10" :
+    "text-red-600 border-red-200 bg-red-50 dark:text-red-500 dark:border-red-500/30 dark:bg-red-500/10";
 
   return (
-    <Card className="p-0 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm relative w-full shadow-lg rounded-xl">
+    <Card className="p-0 overflow-hidden border-border/50 bg-card backdrop-blur-sm relative w-full shadow-lg rounded-xl">
       
-      {/* --- Cover Image Section --- */}
       <div className="relative h-48 sm:h-64 w-full bg-muted m-0 p-0 rounded-t-xl overflow-hidden">
         {coverImage ? (
           <img src={coverImage} alt="Cover" className="w-full h-full object-cover block" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 block" />
+          <div className="w-full h-full bg-slate-200 dark:bg-slate-800 block transition-colors" />
         )}
       </div>
 
       <CardContent className="relative px-6 pb-8 pt-0 sm:px-10 sm:pb-10 sm:pt-0">
-        
-        {/* --- Avatar Row --- */}
         <div className="flex justify-between items-start -mt-16 sm:-mt-20 mb-4">
           <div className="relative">
-            <Avatar className="w-32 h-32 sm:w-40 sm:h-40 border-4 border-card">
+            <Avatar className="w-32 h-32 sm:w-40 sm:h-40 border-4 border-card rounded-full bg-card">
               <AvatarImage src={profileImage || undefined} alt="Profile" className="object-cover" />
-              {/* Tumar dewa exact same AvatarFallback design */}
-              <AvatarFallback className="bg-primary/10 text-primary text-4xl sm:text-5xl font-bold">
+              <AvatarFallback className="bg-card text-foreground text-4xl sm:text-5xl font-semibold transition-colors">
                 {userInitial}
               </AvatarFallback>
             </Avatar>
           </div>
         </div>
 
-        {/* --- Text Information Fields --- */}
         <div className="flex flex-col gap-4 mt-2">
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -101,29 +89,33 @@ export function PublicHeroCard({
               </div>
             </div>
 
-            <div 
-              onClick={handleCopyWallet}
-              className="flex items-center gap-2 bg-zinc-900/50 hover:bg-zinc-800 border border-zinc-700/50 px-3 py-1.5 rounded-md cursor-pointer transition-colors w-fit group"
-              title="Click to copy Wallet Address"
-            >
-              <div className="w-2 h-2 rounded-full bg-green-500/80 group-hover:bg-green-500 transition-colors" />
-              <span className="text-sm font-mono text-zinc-300">
-                {truncateAddress(walletAddress)}
+            <div className="flex items-center max-w-full">
+              
+              <span className="text-xs sm:text-sm font-mono text-slate-700 dark:text-slate-300 break-all sm:break-normal">
+                {walletAddress}
               </span>
-              {isCopied ? (
-                <Check className="w-4 h-4 text-green-500 ml-1" />
-              ) : (
-                <Copy className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 ml-1 transition-colors" />
-              )}
+            
+              <button 
+                onClick={handleCopyWallet}
+                className="p-2 rounded-full hover:bg-muted transition-colors shrink-0 group focus:outline-none"
+                title="Copy Wallet Address"
+              >
+                {isCopied ? (
+                  <CopyCheck className="w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform scale-110" />
+                ) : (
+                  <Copy className="w-4 h-4 text-slate-500 group-hover:text-slate-600 dark:text-slate-400 dark:group-hover:text-slate-200 transition-colors" />
+                )}
+              </button>
+              
             </div>
           </div>
           
-          <p className="text-[15px] text-zinc-400 leading-relaxed max-w-3xl mt-1">
+          <p className="text-[15px] text-muted-foreground leading-relaxed max-w-3xl mt-1">
              {bio || "No bio added yet."}
           </p>
           
           {location && (
-            <div className="flex items-center text-zinc-500 text-sm font-medium mt-1">
+            <div className="flex items-center text-muted-foreground text-sm font-medium mt-1">
               <MapPin className="w-4 h-4 mr-1.5 opacity-70" />
               {location}
             </div>

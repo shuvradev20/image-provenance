@@ -20,7 +20,6 @@ export const ExploreContainer = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Pagination State
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [fetchingMore, setFetchingMore] = useState(false);
@@ -31,10 +30,7 @@ export const ExploreContainer = () => {
       else setFetchingMore(true);
       setError(null);
 
-      // Ekhon ar direct axios na, amader clean helper function call hocche
       const response = await getAllImagesApi(pageNum, 12); 
-      
-      // Tomar backend er ApiResponse class onujayi main data property theke value nilam
       const payload = response.data; 
 
       if (isLoadMore) {
@@ -69,15 +65,6 @@ export const ExploreContainer = () => {
   if (loading) {
     return (
       <div className="w-full space-y-8 pb-10">
-        {/* Header rekhe dile page jump korbe na */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Explore Assets</h1>
-            <p className="text-zinc-400 mt-1">Discover authentic verified digital properties.</p>
-          </div>
-        </div>
-        
-        {/* Skeleton Grid (ekhane 8 ta dummy card dekano hobe) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <AssetCardSkeleton key={i} />
@@ -100,13 +87,6 @@ export const ExploreContainer = () => {
 
   return (
     <div className="w-full space-y-8 pb-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Explore Assets</h1>
-          <p className="text-zinc-400 mt-1">Discover authentic verified digital properties.</p>
-        </div>
-      </div>
-
       {assets.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
           <p className="text-zinc-500">No verified assets found in the network yet.</p>
@@ -120,12 +100,12 @@ export const ExploreContainer = () => {
           </div>
 
           {pagination?.hasNextPage && (
-            <div className="flex justify-center pt-8">
+            <div className="flex justify-center py-2 mb-8 sm:mb-0">
               <Button 
-                variant="secondary" 
+                variant="outline" 
                 onClick={handleLoadMore} 
                 disabled={fetchingMore}
-                className="min-w-[150px]"
+                className="cursor-pointer rounded-full px-6 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-30"
               >
                 {fetchingMore ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
