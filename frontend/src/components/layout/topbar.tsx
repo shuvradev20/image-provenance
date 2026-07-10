@@ -41,7 +41,7 @@ export function Topbar() {
         <div className="flex items-center gap-3 w-auto md:w-64">
           <button
             onClick={toggleSidebar}
-            className="hidden md:block p-2 rounded-full hover:bg-muted transition-colors"
+            className="hidden cursor-pointer md:block p-2 rounded-full hover:bg-muted transition-colors"
             aria-label="Toggle Sidebar"
           >
             <Menu className="w-5 h-5 text-muted-foreground" />

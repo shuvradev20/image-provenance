@@ -2,30 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutGrid, 
-  Globe,
-  ShieldCheck, 
-  Activity, 
-  Settings, 
-  Plus 
-} from 'lucide-react';
+import { LayoutGrid, Globe, ShieldCheck, History, Settings, Plus } from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
-import { useAuthStore } from '@/store/useAuthStore'; 
+import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
+import { SettingsPopover } from '@/components/sections/settings/SettingsPopover';
 
 const baseMenuItems = [
   { name: 'Explore', icon: LayoutGrid, path: '/dashboard' },
-  { name: 'Showcase', icon: Globe, path: '/dashboard/showcase' }, 
+  { name: 'Showcase', icon: Globe, path: '/dashboard/showcase' },
   { name: 'Verify', icon: ShieldCheck, path: '/dashboard/verify' },
-  { name: 'Activity', icon: Activity, path: '/dashboard/activity' },
+  { name: 'Activity', icon: History, path: '/dashboard/activity' },
   { name: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ];
 
 export function Sidebar() {
   const { isSidebarOpen } = useUIStore();
   const pathname = usePathname();
-  const { user } = useAuthStore(); 
+  const { user } = useAuthStore();
 
   const menuItems = baseMenuItems.map((item) => {
     if (item.name === 'Showcase') {
@@ -35,10 +29,10 @@ export function Sidebar() {
   });
 
   const mobileMenuItems = [
-    menuItems[0], 
-    menuItems[1], 
-    menuItems[3], 
-    menuItems[4], 
+    menuItems[0],
+    menuItems[1],
+    menuItems[3],
+    menuItems[4],
   ];
 
   return (
@@ -51,9 +45,9 @@ export function Sidebar() {
       >
         <div className="p-3 mt-8 flex justify-center">
           <Link href="/dashboard/mint" className="w-full">
-            <button 
+            <button
               className={cn(
-                "flex items-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-md",
+                "cursor-pointer flex items-center bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 shadow-md",
                 isSidebarOpen ? "w-full py-2 px-3 justify-start" : "ml-1 w-10 h-10 justify-center"
               )}
             >
@@ -65,27 +59,47 @@ export function Sidebar() {
 
         <div className="flex-1 px-3 py-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
-            const isActive = item.name === 'Explore' 
-              ? pathname === '/dashboard' 
+            const isActive = item.name === 'Explore'
+              ? pathname === '/dashboard'
               : item.name === 'Showcase'
-                ? pathname === item.path 
+                ? pathname === item.path
                 : pathname === item.path || pathname.startsWith(`${item.path}/`);
-              
+
+            if (item.name === 'Settings') {
+              return (
+                <SettingsPopover key={item.name}>
+                  <button
+                    className={cn(
+                      "w-full flex items-center rounded-lg cursor-pointer group relative transition-colors",
+                      isSidebarOpen ? "py-2.5 px-3" : "w-10 h-10 mx-auto justify-center",
+                      isActive
+                        ? "bg-gray-200 dark:bg-[#2A2A2A] text-foreground"
+                        : "text-foreground hover:bg-gray-200 dark:hover:bg-[#2A2A2A]"
+                    )}
+                  >
+                    <item.icon className={cn("shrink-0 w-5 h-5", isActive ? "text-primary" : "")} strokeWidth={1.5} />
+                    {isSidebarOpen && (
+                      <span className="ml-3 text-sm font-medium truncate">
+                        {item.name}
+                      </span>
+                    )}
+                  </button>
+                </SettingsPopover>
+              );
+            }
+
             return (
               <Link key={item.name} href={item.path}>
                 <div
                   className={cn(
                     "flex items-center rounded-lg cursor-pointer group relative transition-colors",
                     isSidebarOpen ? "py-2.5 px-3" : "w-10 h-10 mx-auto justify-center",
-                    isActive 
-                      ? "bg-secondary text-foreground"
-                      : "text-muted-foreground hover:bg-muted dark:hover:bg-secondary/50 hover:text-foreground"
+                    isActive
+                      ? "bg-gray-200 dark:bg-[#2A2A2A] text-foreground"
+                      : "text-foreground hover:bg-gray-200 dark:hover:bg-[#2A2A2A]"
                   )}
                 >
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary rounded-r-full" />
-                  )}
-                  <item.icon className={cn("shrink-0 w-5 h-5", isActive ? "text-primary" : "")} />
+                  <item.icon className={cn("shrink-0 w-5 h-5", isActive ? "text-primary" : "")} strokeWidth={1} />
                   {isSidebarOpen && (
                     <span className="ml-3 text-sm font-medium truncate">
                       {item.name}
@@ -99,18 +113,18 @@ export function Sidebar() {
       </aside>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#1C1C1C]/90 backdrop-blur-md border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-16 transition-colors duration-300">
-        
+
         {mobileMenuItems.slice(0, 2).map((item) => {
-          const isActive = item.name === 'Explore' 
-            ? pathname === '/dashboard' 
+          const isActive = item.name === 'Explore'
+            ? pathname === '/dashboard'
             : item.name === 'Showcase'
               ? pathname === item.path
               : pathname === item.path || pathname.startsWith(`${item.path}/`);
-            
+
           return (
             <Link key={item.name} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
-              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")} />
-              <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
+              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-foreground")} strokeWidth={1} />
+              <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-foreground")}>
                 {item.name}
               </span>
             </Link>
@@ -124,17 +138,28 @@ export function Sidebar() {
         </Link>
 
         {mobileMenuItems.slice(2, 4).map((item) => {
-          // FIX APPLIED HERE TOO
-          const isActive = item.name === 'Explore' 
-            ? pathname === '/dashboard' 
+          const isActive = item.name === 'Explore'
+            ? pathname === '/dashboard'
             : item.name === 'Showcase'
-              ? pathname === item.path 
+              ? pathname === item.path
               : pathname === item.path || pathname.startsWith(`${item.path}/`);
-            
+
+          if (item.name === 'Settings') {
+            return (
+              <SettingsPopover key={item.name}>
+                <button className="flex flex-col items-center justify-center w-16 gap-1 outline-none cursor-pointer">
+                  <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-foreground")} />
+                  <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-foreground")}>
+                    {item.name}
+                  </span>
+                </button>
+              </SettingsPopover>
+            );
+          }
           return (
             <Link key={item.name} href={item.path} className="flex flex-col items-center justify-center w-16 gap-1">
-              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-muted-foreground")} />
-              <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-muted-foreground")}>
+              <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-foreground")} />
+              <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "text-foreground")}>
                 {item.name}
               </span>
             </Link>
