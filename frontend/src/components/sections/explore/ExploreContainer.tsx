@@ -105,7 +105,7 @@ export const ExploreContainer = () => {
                 variant="outline" 
                 onClick={handleLoadMore} 
                 disabled={fetchingMore}
-                className="cursor-pointer rounded-full px-6 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-30"
+                className="cursor-pointer rounded-full px-4 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-20"
               >
                 {fetchingMore ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />

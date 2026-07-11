@@ -21,7 +21,7 @@ export interface IImage extends Document {
     title: string;
     description: string;
     assetCategory: 'photography' | 'digital_art' | 'ai_generated' | 'news_media' | 'illustration' | 'other';
-    tags: string[]; // Array of strings (e.g., ['cyberpunk', 'nature', 'portrait'])
+    tags: string[]; 
     fileDetails: {
         fileType: string; 
         fileSize: number; 

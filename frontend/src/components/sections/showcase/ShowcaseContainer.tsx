@@ -116,14 +116,15 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
             walletAddress={profile.walletAddress}
             coverImage={profile.coverImage}       
             profileImage={profile.profileImage} 
+            socialLinks={profile.socialLinks}
         />
 
       <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-zinc-800/50 pb-4">
-          <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 tracking-tight">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-600/50 pb-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
             Registered Assets
           </h2>
-          <span className="text-sm font-medium text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
             {pagination?.totalImages || assets.length} Items
           </span>
         </div>
@@ -146,7 +147,7 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
                   variant="outline" 
                   onClick={handleLoadMore} 
                   disabled={fetchingMore}
-                  className="cursor-pointer rounded-full px-6 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-30"
+                  className="cursor-pointer rounded-full px-4 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-20"
                 >
                   {fetchingMore ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
