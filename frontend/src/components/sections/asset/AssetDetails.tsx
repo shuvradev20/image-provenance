@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Edit2, Loader2, CheckCircle2, Flame } from "lucide-react";
+import { Edit2, Loader2, CheckCircle2, Flame, AlertCircle } from "lucide-react";
 import { updateMetadataOnChain } from "@/lib/web3";
 import { editMetadataSchema, EditMetadataFormValues } from "@/lib/validations/asset";
 import { prepareMetadataUpdateApi, confirmMetadataUpdateApi } from "@/lib/api/image";
@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormLabel, FormItem, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { formatWalletError } from "@/lib/errors/walletErrors";
+
 
 interface AssetDetailsProps {
     asset: any;
@@ -25,6 +27,7 @@ interface AssetDetailsProps {
 export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHeader = false }: AssetDetailsProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [txError, setTxError] = useState<string | null>(null);
 
     const form = useForm<EditMetadataFormValues>({
         resolver: zodResolver(editMetadataSchema),
@@ -38,6 +41,7 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
 
     const onSubmit = async (values: EditMetadataFormValues) => {
         try {
+            setTxError(null);
             setIsSubmitting(true);
             toast.loading("Preparing new IPFS metadata...", { id: "edit-tx" });
 
@@ -58,8 +62,8 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
             setIsEditing(false);
             onUpdateSuccess();
         } catch (error: any) {
-            console.error("Full Error Object:", error);
-            toast.error(error?.message || error?.reason || "Failed to update.", { id: "edit-tx" });
+            setTxError(formatWalletError(error));
+            toast.dismiss("edit-tx");
         } finally {
             setIsSubmitting(false);
         }
@@ -192,12 +196,39 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                             )}
                         </div>
 
+
+
                         {isEditing && (
-                            <div className="flex gap-3 justify-end pt-6 mt-4 border-t border-border/20">
-                                <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} disabled={isSubmitting}>Cancel</Button>
-                                <Button type="submit" disabled={isSubmitting} className="min-w-30">
-                                    {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Save Changes"}
-                                </Button>
+                            <div className="pt-4 mt-2 border-t border-border/20">
+                                
+                                {txError && (
+                                    <div className="w-full mb-4 p-4 rounded-xl flex items-start gap-3 
+                                        bg-red-50 text-red-600 border border-red-100 
+                                        dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 
+                                        animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                                        <p className="text-sm font-medium leading-relaxed">
+                                            {txError}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 justify-end">
+                                    <Button 
+                                        type="button" 
+                                        variant="ghost" 
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setTxError(null);
+                                        }} 
+                                        disabled={isSubmitting}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isSubmitting} className="min-w-30">
+                                        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Save Changes"}
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </form>
