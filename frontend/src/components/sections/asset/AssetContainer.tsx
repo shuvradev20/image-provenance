@@ -46,12 +46,9 @@ export default function AssetContainer({ hash }: { hash: string }) {
     if (!assetData) return null;
 
     return (
-        // Premium 55/45 split layout - Fixed Heights
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-background">
-            
-            {/* LEFT SIDE: 55% Fixed Image View */}
-            <div className="w-full lg:w-[55%] h-[50vh] lg:h-full bg-muted/5 border-r border-border/40 flex items-center justify-center p-6 lg:p-10 relative">
-                <div className="w-full max-w-2xl">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] w-full overflow-hidden bg-background gap-4 sm:gap-8">
+            <div className="w-full h-[40%] lg:h-full lg:w-[55%] bg-muted/5 border border-border/40 rounded-2xl md:rounded-3xl flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-full h-full flex items-center justify-center relative">
                     <AssetImage 
                         thumbnailUrl={assetData.thumbnailUrl} 
                         title={assetData.title}
@@ -59,37 +56,25 @@ export default function AssetContainer({ hash }: { hash: string }) {
                     />
                 </div>
             </div>
-
-            {/* RIGHT SIDE: 45% Scrollable Content */}
-            <div className="w-full lg:w-[45%] h-full overflow-y-auto p-6 lg:p-10 xl:p-14 flex flex-col gap-10 scroll-smooth pb-24">
-                
-                {/* Card 1: Identity & Story */}
+            <div className="sm:m-8 flex-1 min-h-0 overflow-y-auto pr-2 md:pr-4 flex flex-col gap-8 md:gap-10 pb-20 scroll-smooth custom-scrollbar">
                 <AssetDetails 
                     asset={assetData} 
                     isOwner={assetData.isOwner} 
                     onUpdateSuccess={triggerRefresh} 
                     onlyHeader={true} 
                 />
-
-                {/* Card 2: Creators, Owners & Actions */}
                 <AssetOwnershipControls 
                     asset={assetData} 
                     isOwner={assetData.isOwner} 
                     onUpdateSuccess={triggerRefresh} 
                 />
-
-                {/* Card 3: Technical Specs */}
                 <AssetDetails 
                     asset={assetData} 
                     isOwner={assetData.isOwner} 
                     onUpdateSuccess={triggerRefresh} 
                     onlyHeader={false} 
                 />
-
-                {/* Card 4: Web3 Proofs */}
                 <AssetProofs asset={assetData} />
-
-                {/* Card 5: History / Timeline */}
                 <AssetTimeline history={assetData.history} />
 
             </div>

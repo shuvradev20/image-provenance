@@ -88,7 +88,7 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                             </FormItem>
                                         )} />
                                     ) : (
-                                        <h1 className="text-2xl font-bold tracking-tight text-foreground capitalize">
+                                        <h1 className="text-3xl font-semibold tracking-tight text-foreground capitalize">
                                             {asset.title}
                                         </h1>
                                     )}
@@ -131,7 +131,7 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                         </FormItem>
                                     )} />
                                 ) : (
-                                    <span className="text-foreground/60 text-[13px] tracking-widest uppercase block">
+                                    <span className="text-muted-foreground text-sm font-medium tracking-wide uppercase block">
                                         {asset.assetCategory.replace('_', ' ')}
                                     </span>
                                 )}
@@ -164,9 +164,9 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                             </div>
                         ) : (
                            <div className="space-y-2">
-                                <h3 className="text-lg text-foreground">Description</h3>
-                                <hr className="border-border/70" />
-                                <p className="text-foreground/60 leading-relaxed text-[14px] whitespace-pre-wrap">
+                                <h3 className="text-lg font-semibold text-foreground">Description</h3>
+                                <hr className="border-border" />
+                                <p className="text-foreground/80 leading-relaxed text-sm whitespace-pre-wrap">
                                     {asset.description}
                                 </p>
                             </div>
@@ -195,7 +195,6 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                 )
                             )}
                         </div>
-
 
 
                         {isEditing && (
@@ -240,24 +239,24 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
     return (
         <div className="w-full pt-6">
             <div className="space-y-2">
-                <h3 className="text-lg text-foreground">Technical Details</h3>
-                <hr className="border-border/70" />
+                <h3 className="text-lg font-semibold text-foreground">Technical Details</h3>
+                <hr className="border-border" />
             </div>
 
             <div className="flex flex-col gap-3 pt-2">
                 {asset.fileDetails && (
                     <>
                         <div className="flex justify-between items-center">
-                            <span className="text-[14px] text-foreground/60">Resolution</span>
-                            <span className="text-[14px] text-foreground/60">{asset.fileDetails.width} × {asset.fileDetails.height} px</span>
+                            <span className="text-sm text-muted-foreground">Resolution</span>
+                            <span className="text-sm font-medium text-foreground">{asset.fileDetails.width} × {asset.fileDetails.height} px</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-[14px] text-foreground/60">Format</span>
-                            <span className="text-[14px] uppercase text-foreground/60">{asset.fileDetails.fileType}</span>
+                            <span className="text-sm text-muted-foreground">Format</span>
+                            <span className="text-sm font-medium text-foreground">{asset.fileDetails.fileType}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-[14px] text-foreground/60">File Size</span>
-                            <span className="text-[14px] text-foreground/60">{(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                            <span className="text-sm text-muted-foreground">File Size</span>
+                            <span className="text-sm font-medium text-foreground">{(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                         </div>
                     </>
                 )}
