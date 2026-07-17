@@ -99,11 +99,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
 
     if (asset.status === 'burned') {
         return (
-<<<<<<< HEAD
             <div className="bg-card border border-border rounded-2xl p-6 w-full">
-=======
-            <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm w-full">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                 <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-5 flex items-start gap-4 mb-6">
                     <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
                     <div>
@@ -116,17 +112,10 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
 
                 <div className="flex flex-col gap-5">
                     <div className="w-full">
-<<<<<<< HEAD
                         <p className="text-sm text-muted-foreground mb-1">Minted By</p>
                         <div className="flex items-center gap-3 w-full">
                             <div className="min-w-0 flex-1">
                                 <p className="font-mono text-[13px] text-foreground tracking-tight truncate">
-=======
-                        <p className="text-sm font-semibold text-foreground mb-1">Minted By</p>
-                        <div className="flex items-center gap-3 w-full">
-                            <div className="min-w-0 flex-1">
-                                <p className="font-mono text-[13px] text-muted-foreground tracking-tight truncate">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                     {asset.uploader || "0x0000000000000000000000000000000000000000"}
                                 </p>
                             </div>
@@ -137,17 +126,10 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                     </div>
 
                     <div className="w-full">
-<<<<<<< HEAD
                         <p className="text-sm text-muted-foreground mb-1">Current Owner</p>
                         <div className="flex items-center gap-3 w-full">
                             <div className="min-w-0 flex-1">
                                 <p className="font-mono text-[13px] text-foreground tracking-tight truncate">
-=======
-                        <p className="text-sm font-semibold text-foreground mb-1">Current Owner</p>
-                        <div className="flex items-center gap-3 w-full">
-                            <div className="min-w-0 flex-1">
-                                <p className="font-mono text-[13px] text-muted-foreground tracking-tight truncate">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                     0x0000000000000000000000000000000000000000
                                 </p>
                             </div>
@@ -163,7 +145,6 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
     }
 
     return (
-<<<<<<< HEAD
         <div className="bg-card border border-border rounded-2xl p-6 w-full">
             <div className="flex flex-col gap-5">
                 <div className="w-full">
@@ -171,15 +152,6 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                     <div className="flex items-center gap-3 w-full">
                         <div className="min-w-0 flex-1">
                             <p className="font-mono text-[13px] text-foreground tracking-tight truncate">
-=======
-        <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm w-full">
-            <div className="flex flex-col gap-5">
-                <div className="w-full">
-                    <p className="text-sm font-semibold text-foreground mb-1">Minted By</p>
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="min-w-0 flex-1">
-                            <p className="font-mono text-[13px] text-muted-foreground tracking-tight truncate">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                 {asset.uploader || "0x0000000000000000000000000000000000000000"}
                             </p>
                         </div>
@@ -190,17 +162,10 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                 </div>
 
                 <div className="w-full">
-<<<<<<< HEAD
                     <p className="text-sm text-muted-foreground mb-1">Current Owner</p>
                     <div className="flex items-center gap-3 w-full">
                         <div className="min-w-0 flex-1">
                             <p className="font-mono text-[13px] text-foreground tracking-tight truncate">
-=======
-                    <p className="text-sm font-semibold text-foreground mb-1">Current Owner</p>
-                    <div className="flex items-center gap-3 w-full">
-                        <div className="min-w-0 flex-1">
-                            <p className="font-mono text-[13px] text-muted-foreground tracking-tight truncate">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                 {asset.currentOwner || "0x0000000000000000000000000000000000000000"}
                             </p>
                         </div>
@@ -214,7 +179,6 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
 
             {isOwner && asset.status !== 'burned' && (
                 <div className="flex flex-col gap-5 mt-6">
-<<<<<<< HEAD
                     <div className="bg-muted/50 dark:bg-muted/50 border border-border rounded-xl p-4">
                         <h4 className="text-lg font-semibold text-foreground">Transfer Asset</h4>
                         <div className="h-px bg-border w-full my-3" />
@@ -230,11 +194,6 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                                 </p>
                             </div>
                         )}
-=======
-                    <div className="bg-muted/50 dark:bg-muted/50 border border-border/50 rounded-xl p-4">
-                        <h4 className="text-base font-semibold text-foreground">Transfer Asset</h4>
-                        <div className="h-px bg-border/50 w-full my-3" />
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                         
                         {transferError && (
                             <div className="w-full mb-4 p-3.5 rounded-xl flex items-start gap-3 
@@ -259,11 +218,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                                                 <FormControl>
                                                     <Input 
                                                         placeholder="0x(Recipient Wallet)" 
-<<<<<<< HEAD
                                                         className="font-mono text-sm font-medium bg-background/80 h-10 placeholder:text-muted-foreground/60 dark:placeholder:text-muted-foreground/50"
-=======
-                                                        className="font-mono text-[14px] bg-background/80 h-10 placeholder:text-foreground/40 dark:placeholder:text-foreground/30"
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                                         {...field} 
                                                         disabled={isTransferring || isBurning} 
                                                     />
@@ -300,19 +255,11 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
 
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-<<<<<<< HEAD
                                 <Button variant="outline" className="text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600 dark:border-red-900/30 dark:bg-red-950/20 dark:hover:bg-red-900/40">
                                     <Flame className="w-4 h-4 mr-2" /> Burn Asset
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent className="sm:max-w-125 rounded-xl">
-=======
-                                <Button variant="outline" className="text-red-500 border-red-200 bg-red-50 hover:bg-red-100 hover:text-red-600 dark:border-red-900/30 dark:bg-red-950/20 dark:hover:bg-red-900/40 shadow-sm">
-                                    <Flame className="w-4 h-4 mr-2" /> Burn Asset
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="sm:max-w-125 rounded-2xl">
->>>>>>> da505619225d9bf6ee2cb790db5b31197d2348ec
                                 <AlertDialogHeader>
                                     <AlertDialogTitle className="text-xl tracking-tight">Are you absolutely sure?</AlertDialogTitle>
                                     <AlertDialogDescription className="text-sm leading-relaxed mt-2">
