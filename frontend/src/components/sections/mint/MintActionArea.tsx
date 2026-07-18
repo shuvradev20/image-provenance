@@ -2,60 +2,50 @@
 
 import { useMintStore, MintStepType } from "@/store/useMintStore";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, CircleDashed, Loader2, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, CircleDashed, Loader2, AlertCircle, ArrowRight, XCircle} from "lucide-react";
 
 export default function MintActionArea() {
     const router = useRouter();
-    const { 
-        isMinting, 
-        isTrackerVisible, 
-        currentStep, 
-        progressPercent, 
-        mintError, 
-        mintedAssetHash 
-    } = useMintStore();
-
-    // Helper function to render step icon states
-    const renderStepIcon = (stepName: MintStepType, targetStep: MintStepType, index: number) => {
-        const stepOrder: MintStepType[] = ['ipfs_watermark', 'signature', 'blockchain', 'database', 'success'];
+    const { isMinting, isTrackerVisible, currentStep, progressPercent, mintError, mintedAssetHash } = useMintStore();
+    const stepOrder = ['analyzing_image', 'injecting_dna', 'uploading_ipfs', 'awaiting_wallet', 'verifying_signature', 'minting_blockchain', 'syncing_database', 'success'];
+    
+    const renderStepIcon = (targetStep: MintStepType) => {
         const currentIdx = stepOrder.indexOf(currentStep);
         const targetIdx = stepOrder.indexOf(targetStep);
 
+        if (mintError && currentStep === targetStep) {
+            return <XCircle className="w-5 h-5 text-destructive shrink-0" />;
+        }
         if (currentStep === 'success' || targetIdx < currentIdx) {
             return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
         }
         if (currentStep === targetStep && isMinting) {
             return <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />;
         }
-        return <CircleDashed className="w-5 h-5 text-muted-foreground/60 shrink-0" />;
+        return <CircleDashed className="w-5 h-5 text-muted-foreground shrink-0" />;
     };
 
     const getStepClass = (targetStep: MintStepType) => {
-        const stepOrder: MintStepType[] = ['ipfs_watermark', 'signature', 'blockchain', 'database', 'success'];
         const currentIdx = stepOrder.indexOf(currentStep);
         const targetIdx = stepOrder.indexOf(targetStep);
 
         if (currentStep === targetStep) return "text-foreground font-medium";
-        if (targetIdx < currentIdx || currentStep === 'success') return "text-muted-foreground/80 line-through decoration-emerald-500/30";
-        return "text-muted-foreground/50";
+        if (targetIdx < currentIdx || currentStep === 'success') return "text-muted-foreground line-through decoration-foreground";
+        return "text-muted-foreground";
     };
 
     return (
-        <div className="w-full mt-8 border-t border-border pt-6">
-            {/* Mobile e flex-col (upor-niche), Desktop e lg:flex-row (pashapashi) layout */}
+       <div className="w-full max-w-3xl mx-auto mt-8 mb-6 border-t border-border pt-6">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                
-                {/* ========================================= */}
-                {/* BLOCK 6: Dynamic Magic Button & Info      */}
-                {/* ========================================= */}
-                <div className="w-full lg:w-[35%] flex flex-col space-y-3">
+
+                <div className="w-full lg:w-[40%] flex flex-col space-y-4">
                     {currentStep === 'success' && mintedAssetHash ? (
                         <button
                             type="button"
                             onClick={() => router.push(`/dashboard/asset/${mintedAssetHash}`)}
-                            className="w-full h-14 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98]"
+                            className="w-full h-14 rounded-xl cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground font-semibold flex flex-row items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
                         >
-                            ✨ View Certificate of Authenticity
+                            View Registered asset
                             <ArrowRight className="w-5 h-5" />
                         </button>
                     ) : (
@@ -63,9 +53,8 @@ export default function MintActionArea() {
                             type="submit"
                             form="mint-asset-form"
                             disabled={isMinting}
-                            className="relative w-full h-14 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-semibold overflow-hidden shadow-md transition-all active:scale-[0.98] disabled:opacity-90 disabled:pointer-events-none"
+                            className="relative w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold overflow-hidden transition-all active:scale-[0.98] disabled:opacity-90 disabled:pointer-events-none"
                         >
-                            {/* Live Active Progress Bar inside the Button */}
                             {isMinting && (
                                 <div 
                                     className="absolute left-0 top-0 h-full bg-foreground/10 transition-all duration-500 ease-out"
@@ -73,11 +62,11 @@ export default function MintActionArea() {
                                 />
                             )}
                             
-                            <span className="relative z-10 flex items-center justify-center gap-2">
+                            <span className="relative z-10 w-full h-full flex flex-row items-center justify-center gap-2.5 cursor-pointer">
                                 {isMinting ? (
                                     <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Processing Provenance ({progressPercent}%)
+                                        <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+                                        Processing ({progressPercent}%)
                                     </>
                                 ) : (
                                     "Mint & Register Asset"
@@ -87,65 +76,57 @@ export default function MintActionArea() {
                     )}
                     
                     <p className="text-xs text-muted-foreground text-center lg:text-left">
-                        * User strictly pays their own gas fees via connected wallet ledger context.
+                        * Network gas fees apply
                     </p>
 
-                    {/* Error Display Card */}
                     {mintError && (
-                        <div className="p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl flex items-start gap-3 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                            <p className="text-sm font-medium leading-relaxed">{mintError}</p>
+                        <div className="p-4 bg-destructive/10 h-auto border border-destructive/20 text-destructive rounded-xl flex items-start gap-3 mt-2 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <p className="text-sm leading-relaxed">{mintError}</p>
                         </div>
                     )}
                 </div>
 
-                {/* ========================================= */}
-                {/* BLOCK 7: The Reveal Tracker Checklist     */}
-                {/* ========================================= */}
-                <div className="w-full lg:w-[60%]">
+                <div className="w-full lg:w-[55%]">
                     {isTrackerVisible && (
-                        <div className="p-5 bg-card border border-border rounded-xl shadow-sm space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 lg:slide-in-from-right-4">
+                        <div className="p-6 border-noneshadow-none space-y-5 animate-in fade-in duration-500">
                             <h3 className="text-sm font-semibold tracking-wide text-foreground uppercase border-b border-border pb-2">
-                                Provenance Tracking Pipeline
+                                Minting Progress
                             </h3>
                             
-                            <div className="flex flex-col space-y-3">
-                                {/* Step 1 */}
-                                <div className={`flex items-center gap-3 text-sm ${getStepClass('ipfs_watermark')}`}>
-                                    {renderStepIcon(currentStep, 'ipfs_watermark', 1)}
-                                    <span>Injecting Invisible DNA Watermark & Saving to IPFS</span>
+                            <div className="flex flex-col space-y-4">
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('analyzing_image')}`}>
+                                    {renderStepIcon('analyzing_image')}
+                                    <span className="mt-0.5">Scanning Image & Copyright Check</span>
                                 </div>
-
-                                {/* Step 2 */}
-                                <div className={`flex items-center gap-3 text-sm ${getStepClass('signature')}`}>
-                                    {renderStepIcon(currentStep, 'signature', 2)}
-                                    <span>Awaiting Ownership Cryptographic Signature (MetaMask Sign)</span>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('injecting_dna')}`}>
+                                    {renderStepIcon('injecting_dna')}
+                                    <span className="mt-0.5">Injecting Security DNA</span>
                                 </div>
-
-                                {/* Step 3 */}
-                                <div className={`flex items-center gap-3 text-sm ${getStepClass('blockchain')}`}>
-                                    {renderStepIcon(currentStep, 'blockchain', 3)}
-                                    <span>Publishing Provenance Ledger Entry on Arbitrum Chain</span>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('uploading_ipfs')}`}>
+                                    {renderStepIcon('uploading_ipfs')}
+                                    <span className="mt-0.5">Uploading to Secure Storage</span>
                                 </div>
-
-                                {/* Step 4 */}
-                                <div className={`flex items-center gap-3 text-sm ${getStepClass('database')}`}>
-                                    {renderStepIcon(currentStep, 'database', 4)}
-                                    <span>Synchronizing Secure Asset Data Models with MongoDB Layer</span>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('awaiting_wallet')}`}>
+                                    {renderStepIcon('awaiting_wallet')}
+                                    <span className="mt-0.5">Waiting for Wallet Approval</span>
                                 </div>
-
-                                {/* Step 5 */}
-                                <div className={`flex items-center gap-3 text-sm ${getStepClass('success')}`}>
-                                    {renderStepIcon(currentStep, 'success', 5)}
-                                    <span className={currentStep === 'success' ? "text-emerald-500 font-semibold" : ""}>
-                                        Asset Identity Registered Successfully!
-                                    </span>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('verifying_signature')}`}>
+                                    {renderStepIcon('verifying_signature')}
+                                    <span className="mt-0.5">Verifying Cryptographic Signature</span>
+                                </div>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('minting_blockchain')}`}>
+                                    {renderStepIcon('minting_blockchain')}
+                                    <span className="mt-0.5">Registering on Blockchain</span>
+                                </div>
+                                <div className={`flex items-start gap-3 text-sm transition-colors duration-300 ${getStepClass('syncing_database')}`}>
+                                    {renderStepIcon('syncing_database')}
+                                    <span className="mt-0.5">Saving Final Record</span>
                                 </div>
                             </div>
                         </div>
                     )}
                 </div>
-
             </div>
         </div>
     );

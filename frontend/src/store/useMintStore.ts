@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { uploadAndGenerateProvenanceApi, confirmAndRegisterImageApi } from "@/lib/api/image";
 import { signImageMintPayload, mintImageOnChain } from "@/lib/web3";
+import { formatWalletError } from "@/lib/errors/walletErrors";
 
 interface PreMintData {
     imageHash: string;
@@ -23,7 +24,7 @@ interface PreMintData {
     };
 }
 
-export type MintStepType = 'idle' | 'ipfs_watermark' | 'signature' | 'blockchain' | 'database' | 'success';
+export type MintStepType = 'idle' | 'analyzing_image' | 'injecting_dna' | 'uploading_ipfs' | 'awaiting_wallet' | 'verifying_signature' | 'minting_blockchain' | 'syncing_database' | 'success';
 
 interface MintState {
     isMinting: boolean;
@@ -33,6 +34,7 @@ interface MintState {
     mintError: string | null;
     mintedAssetHash: string | null;
     mintedAssetId: string | null;
+    lastFailedStep: MintStepType | null;
 
     setTrackerVisible: (visible: boolean) => void;
     resetMintState: () => void;
@@ -47,6 +49,7 @@ export const useMintStore = create<MintState>((set, get) => ({
     mintError: null,
     mintedAssetHash: null,
     mintedAssetId: null,
+    lastFailedStep: null,
 
     setTrackerVisible: (visible) => set({ isTrackerVisible: visible }),
 
@@ -64,20 +67,33 @@ export const useMintStore = create<MintState>((set, get) => ({
         set({
             isMinting: true,
             isTrackerVisible: true,
-            currentStep: 'ipfs_watermark',
+            currentStep: 'analyzing_image',
             progressPercent: 15,
             mintError: null,
             mintedAssetHash: null,
             mintedAssetId: null
         });
 
+        let isApiResolved = false;
+
+        const simulateBackendSteps = async () => {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            if (!isApiResolved) set({ currentStep: 'injecting_dna', progressPercent: 30 });
+            
+            await new Promise(resolve => setTimeout(resolve, 2000)); 
+            if (!isApiResolved) set({ currentStep: 'uploading_ipfs', progressPercent: 40 });
+        };
+        simulateBackendSteps();
+
         try {
             const preMintResponse = await uploadAndGenerateProvenanceApi(formData);
             const preMintData: PreMintData = preMintResponse.data;
 
+            isApiResolved = true;
+
             set({ 
-                currentStep: 'signature',
-                progressPercent: 40 
+                currentStep: 'awaiting_wallet',
+                progressPercent: 50
             });
             
             const signature = await signImageMintPayload(
@@ -86,8 +102,13 @@ export const useMintStore = create<MintState>((set, get) => ({
             );
 
             set({ 
-                currentStep: 'blockchain',
-                progressPercent: 65 
+                currentStep: 'verifying_signature',
+                progressPercent: 60
+            });
+
+            set({ 
+                currentStep: 'minting_blockchain',
+                progressPercent: 70 
             });
 
             const txHash = await mintImageOnChain(
@@ -98,7 +119,7 @@ export const useMintStore = create<MintState>((set, get) => ({
             );
 
             set({ 
-                currentStep: 'database',
+                currentStep: 'syncing_database',
                 progressPercent: 85 
             });
 
@@ -129,20 +150,15 @@ export const useMintStore = create<MintState>((set, get) => ({
 
         } catch (error: any) {
             console.error("Minting Operation Failed:", error);
+            isApiResolved = true;
 
-            let message = "Provenance pipeline failed.";
-            if (error?.response?.data?.message) {
-                message = error.response.data.message;
-            } else if (error?.reason) {
-                message = error.reason;
-            } else if (error?.message) {
-                message = error.message;
-            }
+            const userMessage = error?.response?.data?.message || formatWalletError(error) || "Something went wrong.";
 
             set({
-                mintError: message,
+                mintError: userMessage,
                 isMinting: false,
-                progressPercent: 0
+                lastFailedStep: get().currentStep,
+                progressPercent: 0,
             });
             
             throw error;
