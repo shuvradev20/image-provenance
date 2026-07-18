@@ -153,7 +153,7 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
 
                 // Threshold 65% for heavily compressed/edited matches
                 if (highestScore >= 65 && bestMatch) {
-                    throw new ApiError(409, `Copyright Violation: This is an edited version of an existing asset owned by ${bestMatch.currentOwner}. (Match: ${highestScore.toFixed(1)}%)`);
+                    throw new ApiError(409, `Copyright Violation: This is an edited version of an existing asset.`);
                 } else {
                     console.log(`Highest DB match was only ${highestScore.toFixed(1)}%. Image is safe.`);
                 }

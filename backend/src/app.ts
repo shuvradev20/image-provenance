@@ -1,8 +1,19 @@
-import express, {type Application} from 'express'
+import express, { type Application, type ErrorRequestHandler } from 'express';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
 const app: Application = express()
+
+const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+
+    res.status(statusCode).json({
+        success: false,
+        message: message,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
+};
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*',
@@ -23,4 +34,5 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/images", imageRouter);
 
+app.use(errorHandler);
 export { app };
