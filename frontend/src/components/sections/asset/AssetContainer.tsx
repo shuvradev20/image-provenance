@@ -46,9 +46,9 @@ export default function AssetContainer({ hash }: { hash: string }) {
     if (!assetData) return null;
 
 return (
-    <div className="w-full min-h-[calc(100vh-98px)] lg:h-[calc(100vh-98px)] lg:overflow-hidden bg-background flex justify-center">
+    <div className="w-full min-h-[calc(100vh-98px)] lg:h-[calc(100vh-98px)] lg:overflow-hidden bg-muted/8 flex justify-center">
         <div className="flex flex-col lg:flex-row w-full max-w-287.5 h-auto lg:h-full gap-8 pb-8">
-            <div className="w-full lg:w-[59%] h-auto lg:h-full bg-muted/5 border border-border rounded-3xl flex items-center justify-center shrink-0 p-6 lg:p-12 aspect-square lg:aspect-auto">
+            <div className="w-full lg:w-[59%] h-auto lg:h-full border-r flex items-center justify-center shrink-0 lg:p-12 aspect-square lg:aspect-auto">
                 <div className="w-full h-full flex items-center justify-center relative rounded-xl overflow-hidden">
                     <AssetImage 
                         thumbnailUrl={assetData.thumbnailUrl} 
