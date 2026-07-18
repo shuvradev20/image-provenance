@@ -4,7 +4,6 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadCloud, X } from "lucide-react";
-
 import { mintAssetSchema, MintAssetFormValues } from "@/lib/validations/mint";
 import { useMintStore } from "@/store/useMintStore";
 
@@ -41,6 +40,8 @@ export default function MintAssetForm() {
         },
     });
 
+    const { errors } = form.formState;
+
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -73,14 +74,11 @@ export default function MintAssetForm() {
 
     return (
         <Form {...form}>
-            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-3xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
-                    {/* ========================================= */}
-                    {/* LEFT COLUMN: Image Dropzone               */}
-                    {/* ========================================= */}
-                    <div className="lg:col-span-5 flex flex-col space-y-4">
-                        <FormLabel className="text-base font-semibold">Asset Image</FormLabel>
+                    <div className="lg:col-span-5 flex flex-col space-y-2">
+                        <FormLabel className="text-base font-semibold">Asset</FormLabel>
                         <FormField
                             control={form.control}
                             name="assetImage"
@@ -88,8 +86,7 @@ export default function MintAssetForm() {
                                 <FormItem className="flex-1">
                                     <FormControl>
                                         <div 
-                                            // FIX: opacity ar pointer-events bad diye shudhu cursor-not-allowed block add kora hoyeche
-                                            className={`relative flex flex-col items-center justify-center w-full aspect-square md:aspect-4/3 lg:aspect-square border-2 border-dashed rounded-xl transition-colors ${previewUrl ? 'border-primary/50 bg-background' : 'border-border bg-muted/30 hover:bg-muted/50 cursor-pointer'} ${isMinting ? 'cursor-not-allowed' : ''}`}
+                                            className={`relative flex flex-col items-center justify-center w-full aspect-square md:aspect-4/3 lg:aspect-square border-2 border-dashed rounded-xl transition-colors ${previewUrl ? 'border-primary bg-background' : 'border-border bg-muted/20 hover:bg-muted/50 cursor-pointer'} ${isMinting ? 'cursor-not-allowed' : ''}`}
                                             onClick={() => !previewUrl && !isMinting && fileInputRef.current?.click()}
                                         >
                                             <input 
@@ -106,26 +103,25 @@ export default function MintAssetForm() {
                                                     <img 
                                                         src={previewUrl} 
                                                         alt="Asset Preview" 
-                                                        className="w-full h-full object-cover rounded-lg shadow-sm"
+                                                        className="w-full h-full object-cover rounded-lg"
                                                     />
                                                     <button 
                                                         type="button" 
                                                         disabled={isMinting}
                                                         onClick={(e) => { e.stopPropagation(); removeImage(); }}
-                                                        className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-destructive hover:text-destructive-foreground transition shadow-md disabled:cursor-not-allowed"
+                                                        className="absolute top-4 right-4 p-1.5 cursor-pointer rounded-full hover:bg-background/50 hover:text-destructive-foreground transition disabled:cursor-not-allowed"
                                                     >
-                                                        <X className="w-5 h-5" />
+                                                        <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center text-muted-foreground p-6 text-center space-y-3">
-                                                    <div className="p-4 bg-background rounded-full shadow-sm">
+                                                    <div className="p-4 bg-muted rounded-full">
                                                         <UploadCloud className="w-8 h-8 text-primary" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-foreground">Click or Drag & Drop</p>
-                                                        <p className="text-sm mt-1">High resolution images (Max 5MB)</p>
-                                                        <p className="text-xs mt-2 text-muted-foreground/70">JPEG, PNG, WEBP</p>
+                                                        <p className=" text-foreground">Click or Drag & Drop</p>
+                                                        <p className="text-xs mt-2 text-muted-foreground/70">Max 5MB (JPEG, PNG, WEBP)</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -137,22 +133,18 @@ export default function MintAssetForm() {
                         />
                     </div>
 
-                    {/* ========================================= */}
-                    {/* RIGHT COLUMN: Metadata Form               */}
-                    {/* ========================================= */}
                     <div className="lg:col-span-7 flex flex-col space-y-6">
                         <FormField
                             control={form.control}
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base font-semibold">Asset Title</FormLabel>
+                                    <FormLabel className="text-base text-foreground! font-semibold">Asset Name</FormLabel>
                                     <FormControl>
-                                        {/* FIX: removed disabled:opacity-60, strictly triggers native disabled blocking with cursor-not-allowed */}
                                         <Input 
                                             disabled={isMinting} 
-                                            placeholder="e.g. Cyberpunk Dhaka 2026" 
-                                            className="h-12 bg-background disabled:cursor-not-allowed" 
+                                            placeholder="Sunset in Dhaka 2026" 
+                                            className={`h-12 text-xs bg-muted disabled:cursor-not-allowed ${errors.title ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                             {...field} 
                                         />
                                     </FormControl>
@@ -166,16 +158,15 @@ export default function MintAssetForm() {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base font-semibold">Description & Story</FormLabel>
+                                    <FormLabel className="text-base text-foreground! font-semibold">Description</FormLabel>
                                     <FormControl>
                                         <Textarea 
                                             disabled={isMinting}
-                                            placeholder="Tell the story behind this digital asset..." 
-                                            className="min-h-35 resize-none bg-background disabled:cursor-not-allowed" 
+                                            placeholder="Share the details or story behind this digital asset..." 
+                                            className={`min-h-35 text-xs resize-none bg-muted disabled:cursor-not-allowed ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                             {...field} 
                                         />
                                     </FormControl>
-                                    <FormDescription>Describe your asset in detail to establish strong provenance.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -187,10 +178,13 @@ export default function MintAssetForm() {
                                 name="assetCategory"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-base font-semibold">Category</FormLabel>
+                                        <FormLabel className="text-base text-foreground! font-semibold">Category</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isMinting}>
                                             <FormControl>
-                                                <SelectTrigger className="h-12 bg-background disabled:cursor-not-allowed">
+                                                <SelectTrigger 
+                                                    className={`h-12 cursor-pointer bg-muted disabled:cursor-not-allowed transition-none ${errors.assetCategory ? 'border-destructive ring-0! ring-offset-0! focus-visible:ring-destructive' : ''}
+                                                    }`}
+                                                >
                                                     <SelectValue placeholder="Select a category" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -217,19 +211,18 @@ export default function MintAssetForm() {
                                         <FormControl>
                                             <Input 
                                                 disabled={isMinting}
-                                                placeholder="art, futuristic, nature..." 
-                                                className="h-12 bg-background disabled:cursor-not-allowed" 
+                                                placeholder="art, cyberpunk, nature..." 
+                                                className={`h-12 bg-muted disabled:cursor-not-allowed ${errors.tags ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                                 {...field} 
                                             />
                                         </FormControl>
-                                        <FormDescription className="text-xs">Separate with commas</FormDescription>
+                                        <FormDescription className="text-xs">* Separate with commas</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
                     </div>
-
                 </div>
             </form>
         </Form>

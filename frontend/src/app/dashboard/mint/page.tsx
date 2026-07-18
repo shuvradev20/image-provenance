@@ -1,13 +1,8 @@
 import MintContainer from "@/components/sections/mint/MintContainer";
 
-export const metadata = {
-    title: "Mint Asset | ProveNode",
-    description: "Register your digital assets on the blockchain.",
-};
-
 export default function MintPage() {
     return (
-        <div className="p-4 md:p-8 w-full">
+        <div className="md:px-44 w-full h-full">
             <MintContainer />
         </div>
     );

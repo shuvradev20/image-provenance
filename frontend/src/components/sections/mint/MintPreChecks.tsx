@@ -73,6 +73,5 @@ export default function MintPreChecks({ children }: { children: React.ReactNode 
         );
     }
 
-    // Sob verification thik thakle form render hobe
     return <>{children}</>;
 }
