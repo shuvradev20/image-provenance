@@ -50,7 +50,7 @@ export function Topbar() {
           <Link href="/dashboard" className="flex items-center gap-2">
             <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
             <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
-            <span className="font-bold text-xl tracking-tight text-foreground">ProveNode</span>
+            <span className="font-bold text-2xl tracking-tight text-foreground">ProveNode</span>
           </Link>
         </div>
 

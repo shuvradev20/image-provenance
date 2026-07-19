@@ -100,12 +100,12 @@ export const ExploreContainer = () => {
           </div>
 
           {pagination?.hasNextPage && (
-            <div className="flex justify-center py-2 mb-8 sm:mb-0">
+            <div className="flex justify-center pb-2 mb-8 sm:mb-0">
               <Button 
                 variant="outline" 
                 onClick={handleLoadMore} 
                 disabled={fetchingMore}
-                className="cursor-pointer rounded-full px-4 h-8 border-gray-200 bg-white text-gray-700 hover:bg-gray-100 dark:border-zinc-800 dark:bg-black dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white transition-all duration-300 min-w-20"
+                className="cursor-pointer rounded-full px-4 h-8 border border-border bg-forground text-forground hover:bg-muted hover:text-forground/50 transition-all duration-300 min-w-20"
               >
                 {fetchingMore ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
