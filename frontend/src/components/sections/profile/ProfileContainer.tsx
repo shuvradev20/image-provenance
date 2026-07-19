@@ -181,7 +181,7 @@ export function ProfileContainer() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex justify-end gap-4 pt-4"
+              className="flex justify-end gap-4 "
             >
               <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                 Cancel

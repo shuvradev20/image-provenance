@@ -2,16 +2,7 @@
 
 import { useState } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
-import { 
-  Mail, 
-  Wallet, 
-  Copy, 
-  Check, 
-  Plus, 
-  Trash2, 
-  Link as LinkIcon,
-  Globe
-} from "lucide-react";
+import { Mail, Wallet, Copy, Check, Plus, Trash2, Link as LinkIcon, Globe, CopyCheck } from "lucide-react";
 import { FaXTwitter, FaFacebook, FaInstagram } from "react-icons/fa6";
 import { type ProfileFormValues } from "@/lib/validations/profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,7 +53,7 @@ export function ProfileSocials({
   };
 
   return (
-    <Card className=" overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm relative w-full shadow-lg rounded-xl mt-6">
+    <Card className=" overflow-hidden border-border bg-card backdrop-blur-sm relative w-full rounded-xl mt-6">
       <CardHeader className="px-4 sm:px-10 pt-6 sm:pt-8 pb-4">
         <CardTitle className="text-xl flex items-center gap-2">
           <LinkIcon className="w-5 h-5 text-primary" /> Connections & Socials
@@ -76,7 +67,7 @@ export function ProfileSocials({
             <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Mail className="w-4 h-4" /> Email Address
             </h2>
-            <p className="text-base text-foreground font-medium">
+            <p className="text-sm text-foreground">
               {email}
             </p>
           </div>
@@ -86,7 +77,7 @@ export function ProfileSocials({
               <Wallet className="w-4 h-4" /> Wallet Address
             </h2>
             <div className="flex items-center gap-3">
-              <p className="text-base text-foreground font-medium truncate max-w-50 sm:max-w-xs">
+              <p className="text-sm text-foreground truncate max-w-50 sm:max-w-xs">
                 {walletAddress}
               </p>
               {walletAddress !== "No wallet connected" && (
@@ -96,18 +87,22 @@ export function ProfileSocials({
                   className="text-muted-foreground hover:text-foreground transition-colors p-1"
                   title="Copy wallet address"
                 >
-                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? (
+                  <CopyCheck className="w-4 h-4 transition-transform text-foreground " />
+                ) : (
+                  <Copy className="w-4 h-4 text-muted-foreground transition-colors" />
+                )}
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        <hr className="border-border/50" />
+        <hr className="border-border" />
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-muted-foreground">
+            <h2 className="text-sm text-muted-foreground">
               Links
             </h2>
             {isEditing && fields.length < MAX_LINKS && (
@@ -116,7 +111,7 @@ export function ProfileSocials({
                 variant="outline"
                 size="sm"
                 onClick={() => append({ platform: "x", url: "" })}
-                className="h-8 shadow-sm"
+                className="h-8 cursor-pointer"
               >
                 <Plus className="w-4 h-4 mr-1" /> Add Link
               </Button>
@@ -124,7 +119,7 @@ export function ProfileSocials({
           </div>
 
           {fields.length === 0 && !isEditing ? (
-            <p className="text-[15px] text-foreground/90">
+            <p className="text-sm text-foreground">
               No links added yet.
             </p>
           ) : (
@@ -133,15 +128,16 @@ export function ProfileSocials({
                 <div key={field.id} className="w-full">
                   
                   {isEditing ? (
-                    <div className="flex flex-col sm:flex-row items-start sm:items-start gap-3 bg-muted/20 p-3 rounded-lg border border-border/50">
+                    <div className="flex items-center gap-3 bg-muted p-2 rounded-lg border border-border/50 w-full relative">
+                      
                       <FormField
                         control={control}
                         name={`socialLinks.${index}.platform`}
                         render={({ field }) => (
-                          <FormItem className="w-full sm:w-40">
+                          <FormItem className="w-32 sm:w-40 space-y-0">
                             <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-background">
+                                <SelectTrigger className="bg-background shadow-none border-border/60">
                                   <SelectValue placeholder="Platform" />
                                 </SelectTrigger>
                               </FormControl>
@@ -159,11 +155,15 @@ export function ProfileSocials({
                         control={control}
                         name={`socialLinks.${index}.url`}
                         render={({ field }) => (
-                          <FormItem className="flex-1 w-full">
+                          <FormItem className="flex-1 w-full space-y-0">
                             <FormControl>
-                              <Input placeholder="https://..." className="bg-background" {...field} />
+                              <Input 
+                                placeholder="https://..." 
+                                className="bg-background shadow-none border-border/60" 
+                                {...field} 
+                              />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="absolute left-2 text-[10px] text-red-500 mt-0.5" />
                           </FormItem>
                         )}
                       />
@@ -171,25 +171,22 @@ export function ProfileSocials({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0 mt-1 sm:mt-0"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-500/10 shrink-0 h-9 w-9 transition-colors cursor-pointer"
                         onClick={() => remove(index)}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2.5 w-full group">
-                      <div className="shrink-0 p-1.5 bg-muted/50 rounded-md group-hover:scale-110 transition-transform">
+                    <div className="flex items-center gap-1.5 w-full group">
+                      <div className="shrink-0 p-1.5 bg-muted/50 hover:bg-muted rounded-full">
                         {getPlatformIcon(socialLinks[index]?.platform)}
                       </div>
-                      <span className="text-base font-medium capitalize text-foreground shrink-0">
-                        {socialLinks[index]?.platform}:
-                      </span>
                       <a
                         href={socialLinks[index]?.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-base text-primary hover:underline truncate"
+                        className="text-sm text-primary hover:underline truncate"
                       >
                         {socialLinks[index]?.url}
                       </a>

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
-import { Camera, ShieldCheck, ShieldAlert, Pencil, Clock } from "lucide-react";
+import { Camera, ShieldCheck, ShieldAlert, Pencil, Clock, MapPin } from "lucide-react";
 import { type ProfileFormValues } from "@/lib/validations/profile";
 import {
   FormControl,
@@ -64,7 +64,7 @@ export function ProfileBasicInfo({
     <button 
       type="button"
       onClick={onKycBadgeClick}
-      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all border shadow-xs hover:scale-105 ${badgeColor}`}
+      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs cursor-pointer transition-all border ${badgeColor}`}
       title="Click to manage KYC Verification"
     >
       {renderKycIcon()}
@@ -73,20 +73,19 @@ export function ProfileBasicInfo({
   );
 
   return (
-    <Card className="p-0 overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm relative w-full shadow-lg rounded-xl">
+    <Card className="p-0 overflow-hidden border-border bg-card backdrop-blur-sm relative w-full rounded-xl">
       
       <div className="relative h-48 sm:h-64 w-full bg-muted m-0 p-0 rounded-t-xl overflow-hidden">
         {coverImageUrl ? (
           <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover block" />
         ) : (
-          <div className="w-full h-full bg-linear-to-r from-blue-500/20 to-purple-500/20 block" />
+          <div className="w-full h-full bg-slate-200 dark:bg-slate-800 block transition-colors" />
         )}
         
         {isEditing && (
-          <label className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 cursor-pointer z-10">
-            <div className="flex items-center gap-2 bg-background/80 hover:bg-background/90 text-sm px-3 py-1.5 rounded-md backdrop-blur-md transition-colors border shadow-sm">
-              <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">Change Cover</span>
+          <label className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 cursor-pointer z-10">
+            <div className="flex items-center gap-2 bg-background hover:bg-muted text-sm p-2 rounded-full backdrop-blur-md transition-colors border">
+              <Camera className="w-5 h-5 text-foreground" />
             </div>
             <input
               type="file"
@@ -106,7 +105,6 @@ export function ProfileBasicInfo({
         <div className="flex justify-between items-start -mt-16 sm:-mt-20 mb-6">
           <div className="relative">
             <Avatar className="w-32 h-32 sm:w-40 sm:h-40 border-4 border-card">
-              {/* Ekhane "" er bodole undefined dewa hoyeche error fix korar jonno */}
               <AvatarImage src={profileImageUrl || undefined} alt="Profile" className="object-cover" />
               <AvatarFallback className="bg-primary/10 text-primary text-4xl sm:text-5xl font-bold">
                 {userInitial}
@@ -129,46 +127,48 @@ export function ProfileBasicInfo({
             )}
           </div>
 
-          {/* --- Top Right Actions --- */}
-          <div className="flex items-center gap-3 mt-20 sm:mt-24">
+          <div className="flex bg-transparent items-center gap-3 mt-20 sm:mt-24">
             {!isEditing && (
               <Button 
                 type="button" 
-                variant="secondary" 
+                variant="ghost" 
                 size="sm" 
                 onClick={() => setIsEditing(true)}
-                className="shadow-sm"
+                className="h-auto p-0 text-foreground cursor-pointer hover:bg-transparent shadow-none"
               >
-                <Pencil className="w-4 h-4 sm:mr-2" />
+                <Pencil className="w-4 h-4 sm:mr-1" />
                 <span className="hidden sm:inline-block">Edit Profile</span>
               </Button>
             )}
           </div>
         </div>
 
-        {/* --- Text Information Fields --- */}
         <div>
           {!isEditing ? (
-            // VIEW MODE: Clean layout (Name -> Bio -> Location)
             <div className="flex flex-col gap-1">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                <h1 className="text-xl font-semibold tracking-tight text-foreground">
                   {currentFullName}
                 </h1>
                 {kycBadgeButton}
               </div>
               
-              <p className="text-[15px] text-foreground/90 leading-relaxed max-w-3xl mt-1 mb-4">
+              <p className="text-sm text-foreground leading-relaxed max-w-3xl mt-1 mb-4">
                 {watch("bio") || "No bio added yet."}
               </p>
               
-              <div>
-                <h2 className="text-sm font-medium text-muted-foreground mb-1">Location</h2>
-                <p className="text-sm text-foreground font-medium">{watch("location") || "Not specified"}</p>
+             <div>
+                <h2 className="flex items-center text-sm font-medium text-muted-foreground mb-1">
+                  <MapPin className="w-4 h-4 mr-1.5" />
+                  Location
+                </h2>
+                <p className="text-sm text-foreground">
+                  {watch("location") || "Not specified"}
+                </p>
               </div>
             </div>
           ) : (
-            // EDIT MODE: Form layout with grids
+
             <div className="grid gap-6">
               <div className="flex flex-col gap-1">
                 <FormField control={control} name="fullName" render={({ field }) => (
@@ -178,7 +178,7 @@ export function ProfileBasicInfo({
                       {kycBadgeButton}
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your full name" {...field} value={field.value || ""} />
+                      <Input className="bg-muted text-sm" placeholder="Enter your full name" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -190,7 +190,7 @@ export function ProfileBasicInfo({
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Dhaka, Bangladesh" {...field} value={field.value || ""} />
+                      <Input className="bg-muted text-sm" placeholder="e.g. Dhaka, Bangladesh" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -203,7 +203,7 @@ export function ProfileBasicInfo({
                   <FormControl>
                     <Textarea 
                       placeholder="Tell us a bit about yourself..." 
-                      className="resize-none h-24" 
+                      className="resize-none h-24 bg-muted text-sm" 
                       {...field} 
                       value={field.value || ""} 
                     />

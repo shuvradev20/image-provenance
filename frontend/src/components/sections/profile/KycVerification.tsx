@@ -68,11 +68,11 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
   const selfiePreview = selfieFile instanceof File ? URL.createObjectURL(selfieFile) : null;
 
   return (
-    <Card id="kyc-section" className="p-0 overflow-hidden border-red-500/20 bg-card/50 backdrop-blur-sm mt-6 shadow-lg shadow-red-500/5">
+    <Card id="kyc-section" className="p-0 overflow-hidden bg-card border border-border backdrop-blur-sm">
       
-      <CardHeader className="bg-red-500/10 rounded-t-xl border-b border-border/50 px-6 pt-6 sm:px-10 sm:pt-8 pb-5 m-0">
+      <CardHeader className="bg-muted rounded-t-xl border-b border-border/50 px-6 pt-6 sm:px-10 sm:pt-8 pb-5 m-0">
         <CardTitle className="text-xl flex items-center gap-2 text-foreground">
-          <ShieldAlert className="w-5 h-5 text-red-500" /> Identity Verification (KYC)
+          <ShieldAlert className="w-5 h-5 text-blue-500" /> Identity Verification (KYC)
         </CardTitle>
         <CardDescription className="mt-1">
           Verify your identity to protect your work on ProveNode.
@@ -83,8 +83,6 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
       <CardContent className="px-6 pb-6 pt-6 sm:px-10 sm:pb-10">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* Government ID Text Input */}
             <FormField
               control={form.control}
               name="governmentId"
@@ -92,7 +90,7 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                 <FormItem>
                   <FormLabel>Government ID Number (NID/Passport)</FormLabel>
                   <FormControl>
-                    <Input id="governmentId" placeholder="Enter your 10-17 digit ID number" {...field} />
+                    <Input id="governmentId" className="bg-muted text-sm" placeholder="Enter your 10-17 digit ID number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -100,7 +98,6 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Government ID Image Upload with Preview */}
               <FormField
                 control={form.control}
                 name="govIdImage"
@@ -120,7 +117,7 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <IdCard className="w-8 h-8 text-muted-foreground mb-3" />
                             <p className="text-sm text-muted-foreground text-center px-4">
-                              <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                              <span className=" text-primary">Click to upload</span> or drag and drop
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WEBP (Max 5MB)</p>
                           </div>
@@ -141,7 +138,6 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                 )}
               />
 
-              {/* Selfie with ID Upload with Preview */}
               <FormField
                 control={form.control}
                 name="selfieWithGovId"
@@ -154,14 +150,14 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                           <>
                             <img src={selfiePreview} alt="Selfie Preview" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <p className="text-sm font-semibold text-foreground">Click to change image</p>
+                              <p className="text-sm text-foreground">Click to change image</p>
                             </div>
                           </>
                         ) : (
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UserSquare className="w-8 h-8 text-muted-foreground mb-3" />
                             <p className="text-sm text-muted-foreground text-center px-4">
-                              <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                              <span className=" text-primary">Click to upload</span> or drag and drop
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">Make sure your face and ID are clear</p>
                           </div>
@@ -183,8 +179,8 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
               />
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-8">
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-2">
                 {isSubmitting ? (
                   <>
                     <UploadCloud className="w-4 h-4 mr-2 animate-bounce" />
