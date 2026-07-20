@@ -47,8 +47,8 @@ export default function AssetContainer({ hash }: { hash: string }) {
 
 return (
     <div className="w-full min-h-[calc(100vh-98px)] lg:h-[calc(100vh-98px)] lg:overflow-hidden bg-muted/8 flex justify-center">
-        <div className="flex flex-col lg:flex-row w-full max-w-287.5 h-auto lg:h-full gap-8 pb-8">
-            <div className="w-full lg:w-[59%] h-auto lg:h-full border-r flex items-center justify-center shrink-0 lg:p-12 aspect-square lg:aspect-auto">
+        <div className="flex flex-col lg:flex-row w-full max-w-287.5 h-auto lg:h-full mb-12 gap-8">
+            <div className="w-full lg:w-[59%] h-auto lg:h-full sm:border-r flex items-center justify-center shrink-0 lg:p-12 aspect-square lg:aspect-auto">
                 <div className="w-full h-full flex items-center justify-center relative rounded-xl overflow-hidden">
                     <AssetImage 
                         thumbnailUrl={assetData.thumbnailUrl} 
@@ -58,7 +58,7 @@ return (
                 </div>
             </div>
 
-            <div className="w-full lg:w-[41%] lg:h-full lg:overflow-y-auto pr-2 lg:pr-4 flex flex-col gap-8 pb-10 scroll-smooth custom-scrollbar">
+            <div className="w-full lg:w-[41%] lg:h-full lg:overflow-y-auto lg:pr-4 flex flex-col gap-8 pb-10 scroll-smooth custom-scrollbar">
                 <AssetDetails 
                     asset={assetData} 
                     isOwner={assetData.isOwner} 

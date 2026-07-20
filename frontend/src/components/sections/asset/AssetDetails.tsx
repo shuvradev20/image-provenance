@@ -88,7 +88,7 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                             </FormItem>
                                         )} />
                                     ) : (
-                                        <h1 className="text-3xl font-semibold tracking-tight text-foreground capitalize">
+                                        <h1 className="text-xl font-semibold tracking-tight text-foreground capitalize">
                                             {asset.title}
                                         </h1>
                                     )}
@@ -248,15 +248,15 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                     <>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">Resolution</span>
-                            <span className="text-sm font-medium text-foreground">{asset.fileDetails.width} × {asset.fileDetails.height} px</span>
+                            <span className="text-sm text-foreground">{asset.fileDetails.width} × {asset.fileDetails.height} px</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">Format</span>
-                            <span className="text-sm font-medium text-foreground">{asset.fileDetails.fileType}</span>
+                            <span className="text-sm text-foreground">{asset.fileDetails.fileType}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">File Size</span>
-                            <span className="text-sm font-medium text-foreground">{(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB</span>
+                            <span className="text-sm text-foreground">{(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB</span>
                         </div>
                     </>
                 )}

@@ -99,7 +99,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
 
     if (asset.status === 'burned') {
         return (
-            <div className="bg-card border border-border rounded-2xl p-6 w-full">
+            <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 w-full">
                 <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-5 flex items-start gap-4 mb-6">
                     <AlertTriangle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
                     <div>
@@ -145,7 +145,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
     }
 
     return (
-        <div className="bg-card border border-border rounded-2xl p-6 w-full">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 w-full">
             <div className="flex flex-col gap-5">
                 <div className="w-full">
                     <p className="text-sm text-muted-foreground mb-1">Minted By</p>
@@ -266,13 +266,13 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
                                         This action cannot be undone. This will permanently burn the asset <strong className="text-foreground font-semibold">"{asset.title}"</strong> on the blockchain and remove your ownership rights.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
-                                <AlertDialogFooter>
+                                <AlertDialogFooter className="flex flex-row justify-end items-center gap-3 sm:space-x-2 mt-4 sm:mt-0">
                                     <AlertDialogCancel disabled={isBurning}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleBurnAsset} disabled={isBurning} className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:text-white dark:hover:bg-red-800 border-transparent">
+                                    <AlertDialogAction onClick={handleBurnAsset} disabled={isBurning} className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-800 dark:text-white dark:hover:bg-red-900 border-transparent">
                                         {isBurning ? (
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                         ) : (
-                                            <Flame className="w-4 h-4 mr-2" />
+                                            <Flame className="w-4 h-4 mr-1" />
                                         )}
                                         Yes, Burn it
                                     </AlertDialogAction>

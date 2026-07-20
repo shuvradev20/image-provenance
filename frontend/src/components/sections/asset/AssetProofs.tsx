@@ -17,7 +17,7 @@ export default function AssetProofs({ asset }: AssetProofsProps) {
     };
 
     return (
-        <div className="bg-card border border-border rounded-2xl p-6 w-full">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 w-full">
             <div className="flex flex-col gap-6">
                 <div className="w-full">
                     <p className="text-sm text-muted-foreground mb-1">Digital Fingerprint</p>
@@ -40,7 +40,7 @@ export default function AssetProofs({ asset }: AssetProofsProps) {
                             href={asset.downloadUrl || `#` } 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2.5 bg-muted/50 hover:bg-muted border border-border px-4 py-2.5 rounded-lg text-sm font-medium text-foreground transition-all flex-1"
+                            className="flex items-center justify-center gap-2.5 bg-muted/50 hover:bg-muted border border-border px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm text-foreground transition-all flex-1"
                         >
                             <ExternalLink className="w-4 h-4 text-muted-foreground" />
                             Original Image
@@ -49,7 +49,7 @@ export default function AssetProofs({ asset }: AssetProofsProps) {
                             href={asset.metadataLink || `#`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2.5 bg-muted/50 hover:bg-muted border border-border px-4 py-2.5 rounded-lg text-sm font-medium text-foreground transition-all flex-1"
+                            className="flex items-center justify-center gap-2.5 bg-muted/50 hover:bg-muted border border-border px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm text-foreground transition-all flex-1"
                         >
                             <ExternalLink className="w-4 h-4 text-muted-foreground" />
                             Metadata JSON
