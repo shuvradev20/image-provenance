@@ -14,15 +14,15 @@ export default function MintActionArea() {
         const targetIdx = stepOrder.indexOf(targetStep);
 
         if (mintError && currentStep === targetStep) {
-            return <XCircle className="w-5 h-5 text-destructive shrink-0" />;
+            return <XCircle className="w-4 h-4 mt-1 text-destructive shrink-0" />;
         }
         if (currentStep === 'success' || targetIdx < currentIdx) {
-            return <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />;
+            return <CheckCircle2 className="w-4 h-4 mt-1 text-emerald-500 shrink-0" />;
         }
         if (currentStep === targetStep && isMinting) {
-            return <Loader2 className="w-5 h-5 text-primary animate-spin shrink-0" />;
+            return <Loader2 className="w-4 h-4 mt-1 text-primary animate-spin shrink-0" />;
         }
-        return <CircleDashed className="w-5 h-5 text-muted-foreground shrink-0" />;
+        return <CircleDashed className="w-4 h-4 mt-1 text-muted-foreground shrink-0" />;
     };
 
     const getStepClass = (targetStep: MintStepType) => {
@@ -89,8 +89,8 @@ export default function MintActionArea() {
 
                 <div className="w-full lg:w-[55%]">
                     {isTrackerVisible && (
-                        <div className="p-6 border-noneshadow-none space-y-5 animate-in fade-in duration-500">
-                            <h3 className="text-sm font-semibold tracking-wide text-foreground uppercase border-b border-border pb-2">
+                        <div className="sm:p-6  border-noneshadow-none space-y-5 animate-in fade-in duration-500">
+                            <h3 className="text-base font-semibold border-b border-border pb-2">
                                 Minting Progress
                             </h3>
                             

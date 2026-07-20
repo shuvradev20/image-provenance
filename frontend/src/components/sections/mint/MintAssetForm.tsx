@@ -74,11 +74,11 @@ export default function MintAssetForm() {
 
     return (
         <Form {...form}>
-            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-3xl mx-auto">
+            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} overflow-y-auto className="w-full max-w-3xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     <div className="lg:col-span-5 flex flex-col space-y-2">
-                        <FormLabel className="text-base font-semibold">Asset</FormLabel>
+                        <FormLabel >Asset</FormLabel>
                         <FormField
                             control={form.control}
                             name="assetImage"
@@ -139,12 +139,12 @@ export default function MintAssetForm() {
                             name="title"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base text-foreground! font-semibold">Asset Name</FormLabel>
+                                    <FormLabel className=" text-foreground">Asset Name</FormLabel>
                                     <FormControl>
                                         <Input 
                                             disabled={isMinting} 
                                             placeholder="Sunset in Dhaka 2026" 
-                                            className={`h-12 text-xs bg-muted disabled:cursor-not-allowed ${errors.title ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                            className={`h-12 text-sm bg-muted disabled:cursor-not-allowed ${errors.title ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                             {...field} 
                                         />
                                     </FormControl>
@@ -158,12 +158,12 @@ export default function MintAssetForm() {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-base text-foreground! font-semibold">Description</FormLabel>
+                                    <FormLabel className=" text-foreground">Description</FormLabel>
                                     <FormControl>
                                         <Textarea 
                                             disabled={isMinting}
                                             placeholder="Share the details or story behind this digital asset..." 
-                                            className={`min-h-35 text-xs resize-none bg-muted disabled:cursor-not-allowed ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                            className={`min-h-35 text-sm resize-none bg-muted disabled:cursor-not-allowed ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                             {...field} 
                                         />
                                     </FormControl>
@@ -178,7 +178,7 @@ export default function MintAssetForm() {
                                 name="assetCategory"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-base text-foreground! font-semibold">Category</FormLabel>
+                                        <FormLabel className=" text-foreground">Category</FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isMinting}>
                                             <FormControl>
                                                 <SelectTrigger 
@@ -207,12 +207,12 @@ export default function MintAssetForm() {
                                 name="tags"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-base font-semibold">Tags</FormLabel>
+                                        <FormLabel>Tags</FormLabel>
                                         <FormControl>
                                             <Input 
                                                 disabled={isMinting}
                                                 placeholder="art, cyberpunk, nature..." 
-                                                className={`h-12 bg-muted disabled:cursor-not-allowed ${errors.tags ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                                className={`h-12 text-sm bg-muted disabled:cursor-not-allowed ${errors.tags ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                                 {...field} 
                                             />
                                         </FormControl>
