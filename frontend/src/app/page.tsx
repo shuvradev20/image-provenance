@@ -1,5 +1,5 @@
 import { HeroBackground } from "@/components/ui/hero-background.";
-import { Navbar } from "@/components/layout/navbar";
+import { Navbar } from "@/components/layout/user/navbar";
 import { Hero } from "@/components/sections/landing-page/hero";
 import { HowItWorksBackground } from "@/components/ui/how-it-works-background";
 import { HowItWorks } from "@/components/sections/landing-page/how-it-works";

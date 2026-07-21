@@ -71,8 +71,8 @@ export function Topbar() {
               onClick={linkWalletBackend}
               disabled={isConnectingWallet}
               className={cn(
-                "flex items-center justify-center gap-2 border bg-black text-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 rounded-full transition-all font-medium",
-                "p-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2 text-sm text-neutral-300",
+                "flex items-center justify-center gap-2 border bg-black text-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 rounded-2xl transition-all font-medium",
+                "p-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2 text-sm text-white",
                 isConnectingWallet ? "opacity-70 cursor-not-allowed" : "hover:opacity-90 dark:hover:border-neutral-500 shadow-sm"
               )}
             >

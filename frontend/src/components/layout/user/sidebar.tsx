@@ -112,7 +112,7 @@ export function Sidebar() {
         </div>
       </aside>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-[#1C1C1C]/90 backdrop-blur-md border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-16 transition-colors duration-300">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1C1C1C] border-t border-border/50 flex items-center justify-around pb-safe pt-2 px-2 h-14 transition-colors duration-300">
 
         {mobileMenuItems.slice(0, 2).map((item) => {
           const isActive = item.name === 'Explore'

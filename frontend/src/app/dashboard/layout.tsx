@@ -1,5 +1,5 @@
-import { Topbar } from '@/components/layout/topbar';
-import { Sidebar } from '@/components/layout/sidebar';
+import { Topbar } from '@/components/layout/user/topbar';
+import { Sidebar } from '@/components/layout/user/sidebar';
 import { AuthProvider } from '@/components/providers/auth-provider'
 
 
