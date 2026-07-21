@@ -7,6 +7,7 @@ import { ethers } from "ethers";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import config from "../config/config.js";
+import { sendWelcomeEmail } from "../Utils/mailer.js";
 
 
 
@@ -82,7 +83,11 @@ const googleAuth = asyncHandler(async (req: Request, res: Response) => {
             googleId,
             kycStatus: 'unverified',
             isBlockchainRegistered: false,
-        })
+        });
+
+        await sendWelcomeEmail(user.email!, user.fullName!);
+
+
     } else {
         if (!user.googleId) {
             user.googleId = googleId;

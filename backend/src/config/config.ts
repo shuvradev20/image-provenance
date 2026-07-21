@@ -25,7 +25,10 @@ const config = {
 
     contractAddress: process.env.CONTRACT_ADDRESS || "",
     rpcUrl: process.env.RPC_URL || "",
-    ownerPrivateKey: process.env.OWNER_PRIVATE_KEY || ""
+    ownerPrivateKey: process.env.OWNER_PRIVATE_KEY || "",
+
+    email: process.env.EMAIL_USER || "",
+    password: process.env.EMAIL_PASS || ""
 };
 
 export default config;
