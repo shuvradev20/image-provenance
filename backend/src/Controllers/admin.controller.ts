@@ -8,6 +8,7 @@ import config from "../config/config.js";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { ethers } from "ethers";
 import { deleteFromCloudinary } from "../Utils/cloudinary.js";
+import { Activity } from "../Models/activity.models.js";
 
 
 interface IAdminLogin {
@@ -326,12 +327,24 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
         const contract = new ethers.Contract(contractAddress, contractABI, ownerWallet);
 
         const tx = await (contract as any).registerUser(user.walletAddress);
-        await tx.wait();
+        const receipt = await tx.wait();
+
+        const block = await provider.getBlock(receipt.blockNumber);
+        const blockTimestamp = block ? new Date(Number(block.timestamp) * 1000) : new Date();
 
         user.kycStatus = 'verified';
         user.isBlockchainRegistered = true;
         user.kycVerifiedAt = new Date();
         await user.save({validateBeforeSave: false});
+
+        await Activity.create({
+            eventType: 'UserRegistered',
+            actor: ownerWallet.address,       
+            targetUser: user.walletAddress,   
+            transactionHash: tx.hash,
+            blockNumber: receipt.blockNumber,
+            blockTimestamp: blockTimestamp
+        });
 
         return res.status(200).json(
             new ApiResponse(200, {

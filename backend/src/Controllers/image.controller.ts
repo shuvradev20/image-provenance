@@ -14,6 +14,7 @@ import fs from "fs/promises";
 import path from "path";
 import config from "../config/config.js";
 import sharp from 'sharp';
+import { Activity } from "../Models/activity.models.js";
 
 
 interface IUploadImage {
@@ -333,8 +334,9 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
 
     const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
+    let receipt: ethers.TransactionReceipt | null = null;
     try {
-        const receipt = await provider.getTransactionReceipt(transactionHash);
+        receipt = await provider.getTransactionReceipt(transactionHash);
 
         if(!receipt) {
             throw new ApiError(404, "Transaction receipt not found on local node. try again");
@@ -407,6 +409,14 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
         transactionHash,
         status: 'verified',
         history: [{ action: 'minted', actor: customReq.user.walletAddress!, timestamp: blockTimestamp, transactionHash: transactionHash }]
+    });
+
+    await Activity.create({
+        eventType: 'ImageMinted',
+        actor: customReq.user.walletAddress!,
+        transactionHash: transactionHash,
+        blockNumber: receipt.blockNumber,
+        blockTimestamp: blockTimestamp
     });
 
     return res.status(201).json(
@@ -609,8 +619,9 @@ const confirmMetadataUpdate = asyncHandler(async (req: Request, res: Response) =
 
     const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
+    let receipt: ethers.TransactionReceipt | null = null;
     try {
-        const receipt = await provider.getTransactionReceipt(transactionHash);
+        receipt = await provider.getTransactionReceipt(transactionHash);
 
         if (!receipt || receipt.status !== 1) throw new ApiError(400, "On-chain transaction failed.");
         if (receipt.from.toLowerCase() !== customReq.user.walletAddress?.toLowerCase()) throw new ApiError(401, "Sender mismatch.");
@@ -685,6 +696,15 @@ const confirmMetadataUpdate = asyncHandler(async (req: Request, res: Response) =
 
     await image.save();
 
+    await Activity.create({
+        eventType: 'MetadataUpdated',
+        actor: customReq.user.walletAddress!,
+        targetUser: config.contractAddress,
+        transactionHash: transactionHash,
+        blockNumber: receipt.blockNumber,
+        blockTimestamp: blockTimestamp
+    });
+
     return res.status(200).json(
         new ApiResponse(200, {
             imageId: image._id,
@@ -724,8 +744,9 @@ export const confirmImageTransfer = asyncHandler(async (req: Request, res: Respo
 
     const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
+    let receipt: ethers.TransactionReceipt | null = null;
     try {
-        const receipt = await provider.getTransactionReceipt(transactionHash);
+        receipt = await provider.getTransactionReceipt(transactionHash);
 
         if (!receipt || receipt.status !== 1) throw new ApiError(400, "On-chain transaction failed.");
         if (receipt.from.toLowerCase() !== customReq.user.walletAddress?.toLowerCase()) throw new ApiError(401, "Sender mismatch.");
@@ -777,6 +798,15 @@ export const confirmImageTransfer = asyncHandler(async (req: Request, res: Respo
 
     await image.save();
 
+    await Activity.create({
+        eventType: 'ImageTransferred',
+        actor: customReq.user.walletAddress!,   
+        targetUser: newOwnerWallet.toLowerCase(), 
+        transactionHash: transactionHash,
+        blockNumber: receipt.blockNumber,
+        blockTimestamp: blockTimestamp
+    });
+
     return res.status(200).json(
         new ApiResponse(200, {
             imageId: image._id,
@@ -816,8 +846,9 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
 
     const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
+    let receipt: ethers.TransactionReceipt | null = null;
     try {
-        const receipt = await provider.getTransactionReceipt(transactionHash);
+        receipt = await provider.getTransactionReceipt(transactionHash);
 
         if (!receipt || receipt.status !== 1) throw new ApiError(400, "On-chain transaction failed.");
         if (receipt.from.toLowerCase() !== customReq.user.walletAddress?.toLowerCase()) throw new ApiError(401, "Sender mismatch.");
@@ -868,6 +899,15 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
     });
 
     await image.save();
+
+    await Activity.create({
+        eventType: 'ImageBurned',
+        actor: customReq.user.walletAddress!,
+        targetUser: config.contractAddress,
+        transactionHash: transactionHash,
+        blockNumber: receipt.blockNumber,
+        blockTimestamp: blockTimestamp
+    });
 
     return res.status(200).json(
         new ApiResponse(200, {
