@@ -28,11 +28,14 @@ import authRouter from './Routes/auth.routes.js';
 import userRouter from './Routes/user.routes.js';
 import adminRouter from './Routes/admin.routes.js';
 import imageRouter from './Routes/image.routes.js';
+import activityRouter from './Routes/activity.routes.js'
+
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/images", imageRouter);
+app.use("/api/v1/activity", activityRouter)
 
 app.use(errorHandler);
 export { app };
