@@ -22,7 +22,7 @@ interface AssetCardProps {
 
 const truncateAddress = (address: string) => {
   if (!address) return "";
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
 const generateGradient = (address: string) => {
@@ -78,7 +78,7 @@ export const AssetCard = ({ asset }: AssetCardProps) => {
                 className="w-5 h-5 rounded-full shadow-sm shrink-0 border border-gray-200 dark:border-zinc-700"
                 style={{ background: generateGradient(asset.currentOwner) }}
               />
-              <span className="font-medium text-gray-500 dark:text-zinc-400 text-xs group-hover/wallet:text-gray-900 dark:group-hover/wallet:text-zinc-200 whitespace-nowrap transition-colors">
+              <span className="font-medium text-gray-500 dark:text-zinc-400 text-xs group-hover/wallet:text-gray-900 dark:group-hover/wallet:text-zinc-200 transition-colors">
                 {truncateAddress(asset.currentOwner)}
               </span>
             </div>

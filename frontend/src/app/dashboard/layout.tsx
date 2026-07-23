@@ -18,7 +18,7 @@ export default function CleanDashboardLayout({
           <div className="shrink-0 h-full z-40">
             <Sidebar />
           </div>
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 bg-muted/10">
+          <main className="flex-1 overflow-y-auto p-4 mb-18 md:mb-0 md:p-6 lg:p-8 bg-[#f2f4f7]">
             <div className="max-w-7xl mx-auto w-full h-full">
               {children}
             </div>

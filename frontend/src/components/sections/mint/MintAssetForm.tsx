@@ -74,7 +74,7 @@ export default function MintAssetForm() {
 
     return (
         <Form {...form}>
-            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} overflow-y-auto className="w-full max-w-3xl mx-auto">
+            <form id="mint-asset-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full overflow-y-auto max-w-3xl mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     <div className="lg:col-span-5 flex flex-col space-y-2">

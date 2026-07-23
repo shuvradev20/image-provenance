@@ -86,7 +86,7 @@ export const ExploreContainer = () => {
   }
 
   return (
-    <div className="w-full space-y-8 pb-10">
+    <div className="w-full space-y-8">
       {assets.length === 0 ? (
         <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
           <p className="text-zinc-500">No verified assets found in the network yet.</p>
@@ -100,7 +100,7 @@ export const ExploreContainer = () => {
           </div>
 
           {pagination?.hasNextPage && (
-            <div className="flex justify-center pb-2 mb-8 sm:mb-0">
+            <div className="flex justify-center pb-4">
               <Button 
                 variant="outline" 
                 onClick={handleLoadMore} 

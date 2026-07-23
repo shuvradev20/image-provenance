@@ -77,7 +77,7 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
   if (loading) {
     return (
-      <div className="w-full space-y-12 pb-10">
+      <div className="w-full space-y-12">
         <PublicHeroSkeleton />
 
         <div className="space-y-6">
