@@ -3,17 +3,14 @@ import { asyncHandler } from "../Utils/asyncHandler.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
 import { uploadImageBufferToPinata, uploadMetadataToPinata } from "../Utils/pinata.js";
-import { uploadBufferOnCloudinary } from "../Utils/cloudinary.js";
+import { uploadBufferToCloudinary } from "../Utils/cloudinary.js";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import { Image } from "../Models/image.models.js";
 import { ethers } from "ethers";
 import axios from "axios";
 import FormData from "form-data";
 import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
 import config from "../config/config.js";
-import sharp from 'sharp';
 import { Activity } from "../Models/activity.models.js";
 
 
@@ -45,74 +42,48 @@ interface IConfirmMintPayload {
 }
 
 
-function calculateBitwiseSimilarity(hex1: string, hex2: string): number {
-    if (!hex1 || !hex2 || hex1.length !== hex2.length) return 0;
-
-    const buf1 = Buffer.from(hex1, 'hex');
-    const buf2 = Buffer.from(hex2, 'hex');
-
-    let totalBits = buf1.length * 8;
-    let differingBits = 0;
-
-    for (let i = 0; i < buf1.length; i++) {
-        let xor = (buf1[i] || 0) ^ (buf2[i] || 0);
-        
-        while (xor > 0) {
-            differingBits += xor & 1;
-            xor >>= 1;
-        }
-    }
-    return ((totalBits - differingBits) / totalBits) * 100;
-}
-
-
 /**
  * @route POST /api/v1/images/drafts
- * @description Processes image, injects watermark, uploads to Cloudinary & IPFS, 
- * and returns the exact payload needed for the MetaMask transaction.
+ * @description Processes image, injects watermark, uploads to Cloudinary & IPFS.
  */
 const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
 
-    if(!customReq.user) {
-        throw new ApiError(401, "Unauthorized request. user missing.");
-    }
+    if(!customReq.user) throw new ApiError(401, "Unauthorized request. user missing.");
 
     const {title, description, assetCategory, tags} = req.body as IUploadImage;
 
     if(!title || !description || !assetCategory) {
         throw new ApiError(400, "Title, description, and assetCategory are required.");
     }
-
     if(!req.file || !req.file.buffer) {
         throw new ApiError(400, "Image file is required and must be in memory buffer");
     }
 
-    // Hash the uploaded file buffer once for fast DB checks
+    const mimeMap: Record<string, string> = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/webp': 'webp',
+        'image/bmp': 'bmp'
+    };
+    const mimeType = mimeMap[req.file.mimetype] ? req.file.mimetype : 'image/jpeg';
+    const ext = mimeMap[mimeType] || 'jpg';
+
     const rawUint8Array = new Uint8Array(req.file.buffer);
     const incomingFileHash = ethers.keccak256(rawUint8Array);
 
-    // ==========================================
-    // LAYER 1: RAW PLAGIARISM CHECK
-    // ==========================================
-    const existedOriginalImage = await Image.findOne({originalAssetHash: incomingFileHash});
-    if(existedOriginalImage) {
-        throw new ApiError(409, "Plagiarism Detected: This exact original image is already registered on ProveNode.");
-    }
+    const [existedOriginalImage, existedMintedImage] = await Promise.all([
+        Image.findOne({originalAssetHash: incomingFileHash}).lean(),
+        Image.findOne({imageHash: incomingFileHash}).lean()
+    ]);
 
-    // ==========================================
-    // LAYER 2: MINTED ASSET CHECK
-    // ==========================================
-    const existedMintedImage = await Image.findOne({imageHash: incomingFileHash});
-    if(existedMintedImage) {
-        throw new ApiError(409, "Copyright Violation: This exact minted asset is already registered on ProveNode.");
-    }
+    if(existedOriginalImage) throw new ApiError(409, "Plagiarism Detected: Original image already registered.");
+    if(existedMintedImage) throw new ApiError(409, "Copyright Violation: Minted asset already registered.");
 
-    // ==========================================
-    // LAYER 3: DEEP COPYRIGHT CHECK & BITWISE MATCHING
-    // ==========================================
-    console.log("Layer 1 & 2 passed. Analyzing image for hidden ProveNode DNA...");
+    console.log("Analyzing image for hidden ProveNode DNA...");
     const extractionForm = new FormData();
+    
     extractionForm.append('image', req.file.buffer, {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
@@ -123,69 +94,31 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
             headers: { ...extractionForm.getHeaders() }
         });
 
-        // Python jodi kono DNA khuje pay (16 characters)
         if (extractResponse.data && extractResponse.data.status === "found" && extractResponse.data.watermark_id) {
             const foundCoreDNA = extractResponse.data.watermark_id; 
-            
-            // Shudhu 16 char theke default 0000.. asle ignore koro
-            if (foundCoreDNA !== "0000000000000000") {
-                // Optimized DB fetch: Shudhu padding kora ID ar owner anbe
-                const allAssets = await Image.find(
-                    { watermarkID: { $exists: true } }, 
-                    { watermarkID: 1, currentOwner: 1, _id: 0 }
-                ).lean();
-                
-                let bestMatch = null;
-                let highestScore = 0;
+            if (!/^0+$/.test(foundCoreDNA)) {
+                const paddedWatermarkID = foundCoreDNA.padEnd(64, '0');
+                const existedAsset = await Image.findOne({ watermarkID: paddedWatermarkID }).lean();
 
-                for (const asset of allAssets) {
-                    if (asset.watermarkID) {
-                        // DB te 64 character ache, kintu amra shudhu prothom 16 character katbo match korar jonno
-                        const dbCoreDNA = asset.watermarkID.substring(0, 16);
-                        
-                        // 16 char vs 16 char bitwise checking
-                        const score = calculateBitwiseSimilarity(foundCoreDNA, dbCoreDNA);
-                        if (score > highestScore) {
-                            highestScore = score;
-                            bestMatch = asset;
-                        }
-                    }
-                }
-
-                // Threshold 65% for heavily compressed/edited matches
-                if (highestScore >= 65 && bestMatch) {
-                    throw new ApiError(409, `Copyright Violation: This is an edited version of an existing asset.`);
-                } else {
-                    console.log(`Highest DB match was only ${highestScore.toFixed(1)}%. Image is safe.`);
+                if (existedAsset) {
+                    throw new ApiError(409, `Copyright Violation: Image contains DNA of an existing ProveNode asset.`);
                 }
             }
         }
     } catch (error) {
         if (error instanceof ApiError) throw error;
-        console.error("Python Extraction Error:", error);
         throw new ApiError(500, "Failed to analyze image for existing copyrights.");
     }
 
-    // ==========================================
-    // PROCEED WITH FRESH IMAGE PIPELINE
-    // ==========================================
-    console.log(`Image is 100% clean. Starting Fast-Track Provenance Pipeline for: ${title}`);
-
     const parsedTags = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()) : [];
-    
-    // Exactly 16 hex chars (8 Bytes) for Python AI
-    const coreWatermarkID = crypto.randomBytes(8).toString('hex'); 
-    console.log(`Generated Core DNA for Python: ${coreWatermarkID}`);
-    
-    // Pad to 64 hex chars (32 Bytes) for Solidity Smart Contract
+    const coreWatermarkID = crypto.randomBytes(4).toString('hex'); 
     const watermarkID = coreWatermarkID.padEnd(64, '0');
-
     const embedForm = new FormData();
+
     embedForm.append('image', req.file.buffer, {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
     });
-    // Send only the 16 char version to Python
     embedForm.append('watermark_id', coreWatermarkID);
 
     let watermarkedImageBuffer: Buffer;
@@ -197,105 +130,64 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
         });
         watermarkedImageBuffer = pythonResponse.data;
     } catch (error) {
-        console.error("Python Embed Error:", error);
         throw new ApiError(500, "Failed to inject invisible watermark via Python Engine.");
     }
 
-    console.log("Generating Keccak256 Hash for Watermarked Image...");
-    const uint8ArrayData = new Uint8Array(watermarkedImageBuffer);
-    const imageHash = ethers.keccak256(uint8ArrayData);
+    const imageHash = ethers.keccak256(new Uint8Array(watermarkedImageBuffer));
 
-    console.log("Uploading to Cloudinary & Pinata in PARALLEL...");
-
-    const tempDir = path.join(process.cwd(), 'public', 'temp');
-    await fs.mkdir(tempDir, { recursive: true });
+    console.log("Generating Thumbnail & Uploading to Cloudinary & Pinata...");
     
-    // Asol asset ekhon PNG, tai temp file-o .png
-    const tempFilePath = path.join(tempDir, `watermarked_${Date.now()}.png`);
+    const cloudinaryUploadPromise = uploadBufferToCloudinary(watermarkedImageBuffer, {
+        folder: "thumbnails",
+        format: "webp",
+        width: 800,
+        crop: "limit",
+        quality: 80
+    });
 
-    let imageCID, metadataCID, cloudinaryResponse, thumbnailUrl;
+    const pinataUploadPromise = uploadImageBufferToPinata(
+        watermarkedImageBuffer, 
+        `${title.replace(/\s+/g, '_')}_provenode.${ext}`, 
+        mimeType
+    );
 
-    // ProveNode er ultimate asset format PNG hobe
+    const [cloudinaryResponse, pinataImgCID] = await Promise.all([
+        cloudinaryUploadPromise,
+        pinataUploadPromise
+    ]);
+
+    if (!cloudinaryResponse?.secure_url) throw new ApiError(500, "Failed to generate UI thumbnail.");
+    if (!pinataImgCID) throw new ApiError(500, "Failed to upload raw image to IPFS.");
+
     const fileDetails = {
-        fileType: 'image/png',
+        fileType: mimeType,
         fileSize: watermarkedImageBuffer.length,
-        width: 0,
-        height: 0
-    }
+        width: cloudinaryResponse.width,
+        height: cloudinaryResponse.height
+    };
 
-    // ==========================================
-    // WEB2 THUMBNAIL COMPRESSION (Cloudinary er jonno JPG)
-    // ==========================================
-    console.log("Creating optimized thumbnail for Cloudinary...");
-    let cloudinaryBuffer = watermarkedImageBuffer;
+    console.log("Uploading JSON Metadata to Pinata...");
+    const metadataCID = await uploadMetadataToPinata(
+        title, 
+        description, 
+        pinataImgCID,
+        assetCategory,
+        parsedTags,
+        fileDetails, 
+        watermarkID, 
+        imageHash 
+    );
 
-    try {
-        // Jodi chobi 2MB er boro hoy, Cloudinary er jonno resize & JPG te compress korbo
-        if (watermarkedImageBuffer.length > 2 * 1024 * 1024) {
-            cloudinaryBuffer = await sharp(watermarkedImageBuffer)
-                .resize({ width: 800, withoutEnlargement: true }) 
-                .jpeg({ quality: 80 }) // Thumbnail JPG hobe
-                .toBuffer();
-        }
-    } catch (sharpErr) {
-        console.error("Sharp resize failed, using original buffer for Cloudinary", sharpErr);
-    }
-
-    try {
-        const [cloudRes, pinataImgCID] = await Promise.all([
-            // Cloudinary te jacche CHOTO Thumbnail buffer ta (JPG)
-            uploadBufferOnCloudinary(cloudinaryBuffer),
-            
-            // Pinata te jacche ASHOL pure PNG buffer ta (Lossless)
-            uploadImageBufferToPinata(
-                watermarkedImageBuffer, 
-                `${title.replace(/\s+/g, '_')}_provenode.png`, 
-                'image/png'
-            ),
-            fs.writeFile(tempFilePath, watermarkedImageBuffer) 
-        ]);
-
-        cloudinaryResponse = cloudRes as any;
-        imageCID = pinataImgCID;
-
-        if (!cloudinaryResponse?.secure_url) throw new ApiError(500, "Failed to generate UI thumbnail.");
-        if (!imageCID) throw new ApiError(500, "Failed to upload raw image to IPFS.");
-
-        thumbnailUrl = cloudinaryResponse.secure_url;
-        fileDetails.width = cloudinaryResponse.width;
-        fileDetails.height = cloudinaryResponse.height;
-
-        console.log("Uploading JSON Metadata to Pinata...");
-        metadataCID = await uploadMetadataToPinata(
-            title, 
-            description, 
-            imageCID,
-            assetCategory,
-            parsedTags,
-            fileDetails, 
-            watermarkID, // Send the 64-char version to IPFS & Smart Contract
-            imageHash 
-        );
-
-        if (!metadataCID) throw new ApiError(500, "Failed to upload JSON metadata to IPFS.");
-
-    } finally {
-        try {
-            await fs.unlink(tempFilePath);
-        } catch (cleanupErr) {
-            console.error("Temp file cleanup failed:", cleanupErr);
-        }
-    }
+    if (!metadataCID) throw new ApiError(500, "Failed to upload JSON metadata to IPFS.");
 
     console.log("Pipeline Complete! Dispatching Payload to Frontend.");
-
     return res.status(200).json(
         new ApiResponse(200, {
             imageHash,
-            watermarkID, // Frontend gets 64-char version for MetaMask signing
+            watermarkID,
             metadataCID,
-            thumbnailUrl,
-            ipfsImageUrl: `https://gateway.pinata.cloud/ipfs/${imageCID}`,
+            thumbnailUrl: cloudinaryResponse.secure_url,
+            ipfsImageUrl: `https://gateway.pinata.cloud/ipfs/${pinataImgCID}`,
             preparedData: {
                 title, 
                 description,
@@ -305,7 +197,7 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
                 originalAssetHash: incomingFileHash 
             }
         }, "Pre-Mint preparation successful! Ready for MetaMask signature.")
-    )
+    );
 });
 
 /**
@@ -387,6 +279,7 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
             throw new ApiError(400, "Payload Manipulation Detected! The provided hash does not match the blockchain transaction.");
         };
     } catch (error) {
+        if (error instanceof ApiError) throw error;
         throw new ApiError(500, "Blockchain communication failed during verification.");
     }
 
