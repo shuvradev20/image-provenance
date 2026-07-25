@@ -5,7 +5,7 @@ import { ApiResponse } from "../Utils/ApiResponse.js";
 import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import { User } from "../Models/user.models.js";
 import { Image } from "../Models/image.models.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
+import { uploadBufferToCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
 import fs from "fs/promises"
 
 
@@ -195,43 +195,36 @@ const updateProfile = asyncHandler(async (req: Request, res: Response) => {
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    const profileImageLocalPath = files?.profileImage?.[0]?.path;
-    if (profileImageLocalPath) {
-        
-        try {
-            const uploadedImage = await uploadOnCloudinary(profileImageLocalPath);
-            if (uploadedImage) {
-                updateFields.profileImage = uploadedImage.url;
-            } else {
-                throw new ApiError(500, "Failed to upload profile image to Cloudinary");
-            }
-        } finally {
-            try {
-                await fs.unlink(profileImageLocalPath);
-            } catch (error) {
-                console.error("Failed to delete temp profile image:", error);
-            }
-        }    
-    };
+    const profilePicFile = files?.profileImage?.[0];
+    if (profilePicFile) {
+        const uploadedImage = await uploadBufferToCloudinary(profilePicFile.buffer, {
+            folder: "profiles",
+            format: "webp",
+            width: 400,
+            height: 400,
+            crop: "fill"
+        });
+        if (uploadedImage) {
+            updateFields.profileImage = uploadedImage.secure_url;
+        } else {
+            throw new ApiError(500, "Failed to upload profile image to Cloudinary");
+        }
+    }
 
-    const coverImageLocalPath = files?.coverImage?.[0]?.path;
-
-    if (coverImageLocalPath) {
-        try {
-            const uploadedImage = await uploadOnCloudinary(coverImageLocalPath);
-            if (uploadedImage) {
-                updateFields.coverImage = uploadedImage.url;
-            } else {
-                throw new ApiError(500, "Failed to upload cover image to Cloudinary");
-            }
-        } finally {
-            try {
-                await fs.unlink(coverImageLocalPath);
-            } catch (error) {
-                console.error("Failed to delete temp cover image:", error);
-            }
-        }    
-    };
+    const coverPicFile = files?.coverImage?.[0];
+    if (coverPicFile) {
+        const uploadedImage = await uploadBufferToCloudinary(coverPicFile.buffer, {
+            folder: "covers",
+            format: "webp",
+            width: 1200,
+            crop: "limit"
+        });
+        if (uploadedImage) {
+            updateFields.coverImage = uploadedImage.secure_url;
+        } else {
+            throw new ApiError(500, "Failed to upload cover image to Cloudinary");
+        }
+    }
 
     if (Object.keys(updateFields).length === 0) {
         throw new ApiError(400, "Please provide at least one field to update");
@@ -279,10 +272,10 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
     }
 
     const files = req.files as {[fieldname: string]: Express.Multer.File[]};
-    const govIdImageLocalPath = files?.govIdImage?.[0]?.path;
-    const selfieLocalPath = files?.selfieWithGovId?.[0]?.path;
+    const govIdFile = files?.govIdImage?.[0];
+    const selfieFile = files?.selfieWithGovId?.[0];
 
-    if(!govIdImageLocalPath || !selfieLocalPath) {
+    if (!govIdFile || !selfieFile) {
         throw new ApiError(400, "govIdImage and selfieWithGovId are required");
     }
 
@@ -290,19 +283,23 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
     let selfie: any = null;
 
     try {
-        govIdImage = await uploadOnCloudinary(govIdImageLocalPath);
-        if (!govIdImage){
+        govIdImage = await uploadBufferToCloudinary(govIdFile.buffer, {
+            folder: "kyc_docs"
+        });
+        if (!govIdImage) {
             throw new ApiError(500, "Failed to upload Government ID image");
-        } 
+        }
 
-        selfie = await uploadOnCloudinary(selfieLocalPath);
-        if (!selfie){
+        selfie = await uploadBufferToCloudinary(selfieFile.buffer, {
+            folder: "kyc_docs"
+        });
+        if (!selfie) {
             throw new ApiError(500, "Failed to upload Selfie image");
         } 
     
         user.governmentId = governmentId;
-        user.govIdImageUrl = govIdImage.url;
-        user.selfieWithGovIdUrl = selfie.url;
+        user.govIdImageUrl = govIdImage.secure_url;
+        user.selfieWithGovIdUrl = selfie.secure_url;
         user.kycStatus = 'pending';
         user.kycSubmittedAt = new Date();
     
@@ -312,17 +309,10 @@ const submitKyc = asyncHandler(async (req: CustomRequest, res: Response) => {
             new ApiResponse(200, {kycStatus: user.kycStatus}, "KYC submitted successfully. Pending admin approval.")
         )
     } catch (error) {
-        if(govIdImage && !selfie) {
+        if (govIdImage && !selfie) {
             if (govIdImage.public_id) await deleteFromCloudinary(govIdImage.public_id);
         }
         throw error;
-    } finally {
-        try {
-            if (govIdImageLocalPath) await fs.unlink(govIdImageLocalPath);
-            if (selfieLocalPath) await fs.unlink(selfieLocalPath);
-        } catch (cleanupErr) {
-            console.error("Temp file cleanup failed:", cleanupErr);
-        }
     }
 });
 

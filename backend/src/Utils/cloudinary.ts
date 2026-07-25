@@ -1,7 +1,6 @@
-import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
+import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
 import config from '../config/config.js';
-import streamfier from 'streamifier'
+import streamifier from 'streamifier'
 
 
 cloudinary.config({ 
@@ -10,71 +9,69 @@ cloudinary.config({
     api_secret: config.api_secret
 });
 
-const uploadOnCloudinary = async (localFilePath: string) => {
-    try {
-        if (!localFilePath) return null;
-
-        const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto" 
-        });
-        return response; 
-
-    } catch (error) {
-        console.error("Cloudinary Upload Error: ", error);
-        return null;
-    }
-};
+export interface CloudinaryUploadOptions {
+  folder: string;
+  format?: 'webp' | 'png' | 'jpg' | 'jpeg' | 'bmp';
+  width?: number;
+  height?: number;
+  crop?: 'fill' | 'limit' | 'fit' | 'thumb';
+  quality?: 'auto' | number;
+}
 
 /**
- * @function uploadBufferOnCloudinary
- * @description Directly uploads a memory buffer to Cloudinary without saving to disk.
- * Optimizes the image to a lightweight WebP format for dashboard speed.
+ * @function uploadBufferToCloudinary
+ * @description Uploads RAM Buffer directly to Cloudinary without writing to local disk.
  */
-const uploadBufferOnCloudinary = async (fileBuffer: Buffer) => {
-    return new Promise((resolve, reject) => {
-        if(!fileBuffer) {
-            return reject("No buffer provided");
+export const uploadBufferToCloudinary = async (
+  fileBuffer: Buffer, 
+  options: CloudinaryUploadOptions
+): Promise<UploadApiResponse> => {
+  return new Promise((resolve, reject) => {
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return reject(new Error("Empty file buffer provided"));
+    }
+
+    const { folder, format, width, height, crop, quality = "auto" } = options;
+
+    const uploadOptions: Record<string, any> = {
+      folder: `provenode/${folder}`, 
+      resource_type: "image",
+      quality: quality,
+    };
+
+    // Apply transformation rules only when specified
+    if (format) uploadOptions.format = format;
+    if (width) uploadOptions.width = width;
+    if (height) uploadOptions.height = height;
+    if (crop) uploadOptions.crop = crop;
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      uploadOptions,
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          console.error(`[Cloudinary Error] Failed to upload to folder ${folder}:`, error);
+          reject(error);
         }
+      }
+    );
 
-        const uploadStream = cloudinary.uploader.upload_stream(
-            {
-                folder: "provenode_thumbnails",
-                format: "webp",
-                quality: "auto",
-                width: 800,
-                crop: "limit"
-            },
-            (error, result) => {
-                if(result) {
-                    resolve(result);
-                } else {
-                    console.error("Cloudinary Buffer Upload Error: ", error);
-                    reject(error);
-                }
-            }
-        );
-
-        // Convert the Buffer into a readable stream and pipe it to Cloudinary
-        streamfier.createReadStream(fileBuffer).pipe(uploadStream);
-    });
+    // Convert Buffer stream directly into Cloudinary pipeline
+    streamifier.createReadStream(fileBuffer).pipe(uploadStream);
+  });
 };
 
 /**
  * @function deleteFromCloudinary
- * @description Deletes an image from Cloudinary using its public ID.
+ * @description Removes image asset via publicId
  */
-const deleteFromCloudinary = async (publicId: string) => {
-    try {
-        if (!publicId) return null;
-        
-        // Cloudinary theke delete korar asol command
-        const response = await cloudinary.uploader.destroy(publicId);
-        console.log(`Cloudinary image deleted: ${publicId}`);
-        return response;
-    } catch (error) {
-        console.error("Error deleting image from Cloudinary:", error);
-        return null;
-    }
+export const deleteFromCloudinary = async (publicId: string): Promise<any> => {
+  try {
+    if (!publicId) return null;
+    return await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("[Cloudinary Error] Delete failed:", error);
+    return null;
+  }
 };
-
-export { uploadOnCloudinary, uploadBufferOnCloudinary, deleteFromCloudinary };
