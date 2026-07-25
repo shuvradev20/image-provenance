@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UploadCloud, X } from "lucide-react";
-import { mintAssetSchema, MintAssetFormValues } from "@/lib/validations/mint";
+import { mintAssetSchema, MintAssetFormValues } from "@/lib/validations/asset";
 import { useMintStore } from "@/store/useMintStore";
 
 import {
