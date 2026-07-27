@@ -841,6 +841,87 @@ const searchImages = asyncHandler(async (req: Request, res: Response) => {
     );
 })
 
+/**
+ * @route POST /api/v1/images/verify
+ * @description Verifies image authenticity by checking hash first, then fallback to invisible watermark.
+ */
+const verifyImage = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.file || !req.file.buffer) {
+        throw new ApiError(400, "Image file is required for verification");
+    }
+
+    const rawUint8Array = new Uint8Array(req.file.buffer);
+    const incomingFileHash = ethers.keccak256(rawUint8Array);
+
+    let matchedAsset = await Image.findOne({
+        $or: [
+            { originalAssetHash: incomingFileHash },
+            { imageHash: incomingFileHash }
+        ]
+    }).lean();
+
+    if (matchedAsset) {
+        console.log("Result: Exact match found! Image is Authentic.");
+        return res.status(200).json(
+            new ApiResponse(200, {
+                status: "authentic",
+                asset: matchedAsset,
+            }, "Exact match found. The asset is authentic.")
+        );
+    }
+
+    const extractionForm = new FormData();
+    extractionForm.append('image', req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+    });
+
+    try {
+        const extractResponse = await axios.post('http://127.0.0.1:8000/extract-watermark', extractionForm, {
+            headers: { ...extractionForm.getHeaders() }
+        });
+
+        if (extractResponse.data && extractResponse.data.status === "found" && extractResponse.data.watermark_id) {
+            const foundCoreDNA = extractResponse.data.watermark_id; 
+
+            if (!/^0+$/.test(foundCoreDNA)) {
+                const paddedWatermarkID = foundCoreDNA.padEnd(64, '0');
+                
+                matchedAsset = await Image.findOne({ watermarkID: paddedWatermarkID }).lean();
+
+                if (matchedAsset) {
+                    console.log("Result: DNA Matched! Image is an Edited version of a registered asset.");
+                    return res.status(200).json(
+                        new ApiResponse(200, {
+                            status: "edited",
+                            asset: matchedAsset,
+                        }, "Registered asset detected, but modifications are present.")
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(500, "Verification Engine Error: Failed to extract ProveNode DNA. Please try again later.");
+    }
+
+    const mimeMap: Record<string, string> = {
+        'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg',
+        'image/webp': 'webp', 'image/bmp': 'bmp'
+    };
+    const mimeType = mimeMap[req.file.mimetype] ? req.file.mimetype : 'image/jpeg';
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            status: "unregistered",
+            asset: null,
+            uploadedFileDetails: {
+                fileSize: req.file.buffer.length,
+                fileType: mimeType
+            }
+        }, "No match found. This asset is not registered on ProveNode.")
+    );
+});
 
 
 export {
@@ -851,7 +932,8 @@ export {
     prepareMetadataUpdate,
     confirmMetadataUpdate,
     confirmImageBurn,
-    searchImages
+    searchImages,
+    verifyImage
 }
 
 

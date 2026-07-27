@@ -8,7 +8,8 @@ import {
     confirmImageBurn,
     confirmImageTransfer,
     confirmMetadataUpdate,
-    searchImages
+    searchImages,
+    verifyImage
 } from "../Controllers/image.controller.js";
 import { verifyJWT } from "../Middlewares/auth.middleware.js";
 import { upload } from "../Middlewares/multer.middleware.js";
@@ -17,6 +18,10 @@ const router = Router();
 
 router.route("/").get(getAllImages);
 router.route("/search").get(searchImages);
+router.route("/verify").post(
+    upload.single("image"), 
+    verifyImage
+);
 router.route("/:hash").get(getImageByHash);
 router.use(verifyJWT);
 router.route("/drafts").post(
