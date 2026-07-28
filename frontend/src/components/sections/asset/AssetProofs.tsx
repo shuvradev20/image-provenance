@@ -9,7 +9,6 @@ interface AssetProofsProps {
 
 export default function AssetProofs({ asset }: AssetProofsProps) {
     const [copied, setCopied] = useState(false);
-    console.log(asset)
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
         setCopied(true);

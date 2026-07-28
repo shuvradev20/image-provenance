@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { AuthModal } from "@/components/sections/auth/auth-modal";
+import Link from "next/link";
 
 export function Hero() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -56,9 +57,14 @@ export function Hero() {
           </HoverBorderGradient>
         </div>
                 
-        <button className="w-full sm:w-auto rounded-full bg-transparent border border-gray-300 dark:border-white/10 hover:border-gray-800 dark:hover:border-white/30 px-6 py-3 text-sm sm:text-base font-semibold text-gray-700 dark:text-white transition-all duration-300">
+        <Link 
+          href="/verify"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full sm:w-auto rounded-full bg-transparent border border-gray-300 dark:border-white/10 hover:border-gray-800 dark:hover:border-white/30 px-6 py-3 text-sm sm:text-base font-semibold text-gray-700 dark:text-white transition-all duration-300 flex items-center justify-center"
+        >
           Verify Ownership
-        </button>
+        </Link>
       </div>
 
       <AuthModal 
