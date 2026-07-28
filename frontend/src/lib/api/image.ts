@@ -80,3 +80,12 @@ export const searchAssetsApi = async (query: string) => {
     const response = await api.get(`/images/search?q=${encodeURIComponent(query)}`);
     return response.data;
 };
+
+export const verifyImageApi = async (formData: FormData) => {
+    const response = await api.post('/images/verify', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return response.data;
+};
