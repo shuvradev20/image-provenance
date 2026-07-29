@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Copy, LogOut, UserCircle } from 'lucide-react';
+import { Copy, CopyCheck, LogOut, UserCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
@@ -35,63 +35,70 @@ export function UserDropdown() {
     <div className="relative" ref={dropdownRef}>
       <div
         onClick={() => setIsOpen(!isOpen)}
+        title={currentActiveWallet}
         className={cn(
-          "flex items-center justify-center gap-2 bg-background transition-all cursor-pointer rounded-full",
-          "w-9 h-9 p-0 md:w-auto md:h-auto md:px-3 md:py-1.5",
-          isOpen ? "border border-gray-400 dark:border-neutral-200" : "border border-gray-300 dark:border-neutral-700 hover:border-gray-400 dark:hover:border-neutral-400"
+          "flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-full border border-border bg-background text-foreground",
+          "w-10 h-10 p-0 md:w-auto md:h-10 md:px-3 md:py-1.5",
+          "hover:bg-zinc-200/80 dark:hover:bg-zinc-800",
+          isOpen && "bg-zinc-200/80 dark:bg-zinc-800 border-border"
         )}
       >
         <div className="w-6 h-6 md:w-5 md:h-5 rounded-full bg-linear-to-tr from-[#f58320] via-[#c6307e] to-[#4527a0] shrink-0 shadow-inner" />
-        <span className="text-sm font-medium text-foreground hidden md:block">
+        <span className="text-sm font-mono font-medium tracking-tight text-foreground hidden md:inline-block">
           {formatAddress(currentActiveWallet)}
         </span>
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-56 p-1 bg-white dark:bg-[#1C1C1C] border border-border rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+        <div className="absolute right-0 mt-2 w-60 p-1.5 bg-popover text-popover-foreground border border-border rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
           <Link
+            title="View Creator Profile"
             href="/dashboard/profile"
             onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-3 py-3 mb-1 hover:bg-muted rounded-lg transition-colors group cursor-pointer"
+            className="flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 rounded-lg transition-colors group cursor-pointer"
           >
             <UserCircle className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
             <div className="flex flex-col overflow-hidden">
-              <span className="font-semibold text-sm truncate text-foreground">
+              <span className="font-medium text-sm truncate text-foreground">
                 {user?.fullName || "Unnamed Creator"}
               </span>
-              <span className="text-xs text-muted-foreground truncate font-medium">
+              <span className="text-[10px] text-muted-foreground truncate font-normal">
                 View Profile
               </span>
             </div>
           </Link>
 
-          <div className="h-px bg-border my-1 mx-1" />
+          <div className="h-px bg-border my-1" />
 
-          <div className="flex flex-col">
-            <button
-              onClick={handleCopyAddress}
-              className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <Copy className="w-5 h-5 shrink-0" />
-                <span>Copy Address</span>
-              </div>
-              {copied && <span className="text-[10px] text-green-500 font-bold uppercase tracking-wider">Copied</span>}
-            </button>
+          <button
+            type="button"
+            onClick={handleCopyAddress}
+            title={copied ? "Copied to clipboard!" : `Copy`}
+            className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              {copied ? (
+                <CopyCheck className="w-4 h-4 shrink-0 text-foreground animate-in zoom-in-75 duration-150" />
+              ) : (
+                <Copy className="w-4 h-4 shrink-0" />
+              )}
+              <span className="text-sm">Copy Address</span>
+            </div>
+          </button>
 
-            <div className="h-px bg-border my-1 mx-1" />
+          <div className="h-px bg-border my-1" />
 
-            <button
-              onClick={() => {
-                if (logout) logout();
-                setIsOpen(false);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors group"
-            >
-              <LogOut className="w-5 h-5 shrink-0 group-hover:text-red-500 transition-colors" />
-              <span>Log Out</span>
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              if (logout) logout();
+              setIsOpen(false);
+            }}
+            title="Disconnect wallet & logout"
+            className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-status-error/90 hover:text-status-error hover:bg-status-error/10 rounded-lg transition-colors group cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 shrink-0 transition-colors" />
+            <span className="text-sm">Log Out</span>
+          </button>
         </div>
       )}
     </div>

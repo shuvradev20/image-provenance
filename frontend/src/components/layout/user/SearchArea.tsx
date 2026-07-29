@@ -45,41 +45,43 @@ export function SearchArea({ isMobileSearchOpen, setIsMobileSearchOpen }: Search
     <>
       <div className="hidden md:flex flex-1 max-w-xl mx-3 group">
         <div className="flex items-stretch w-full h-10">
-          <div className="flex-1 flex items-center border border-gray-300 dark:border-neutral-700 bg-background rounded-l-full focus-within:border-black dark:focus-within:border-gray-400 transition-all overflow-hidden z-10">
+          <div className="flex-1 flex items-center border border-border bg-background rounded-l-full focus-within:border-ring transition-colors overflow-hidden z-10">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleSearch}
             placeholder="Search"
-            className="flex-1 min-w-0 h-full bg-transparent pl-5 pr-2 text-base focus:outline-none text-foreground placeholder:text-muted-foreground"
+            className="flex-1 min-w-0 h-full bg-transparent pl-5 pr-2 text-sm focus:outline-none text-foreground placeholder:text-muted-foreground"
           />
             
             {searchQuery && (
               <button
+                title="Clear input"
                 onClick={() => setSearchQuery("")}
-                className="px-3 h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                className="px-3 h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
           <button
+            title="Search"
             onClick={handleSearch}
-            className="h-full px-6 bg-muted/50 hover:bg-muted border border-gray-300 dark:border-neutral-700 border-l-0 rounded-r-full flex items-center justify-center transition-colors group/btn cursor-pointer"
+            className="h-full px-6 bg-secondary hover:bg-zinc-200/80 dark:hover:bg-zinc-800 border border-border border-l-0 rounded-r-full flex items-center justify-center transition-colors group/btn cursor-pointer"
           >
-            <Search className="w-5 h-5 text-muted-foreground group-hover/btn:text-foreground" />
+            <Search className="w-4 h-4 text-muted-foreground group-hover/btn:text-foreground transition-colors" />
           </button>
           
         </div>
       </div>
 
       {isMobileSearchOpen && (
-        <div className="md:hidden fixed inset-0 bg-background z-60 flex flex-col animate-in fade-in zoom-in-95 duration-200">
-          <div className="p-3 pt-4">
-            <div className="relative flex items-center bg-muted/40 border border-border rounded-full focus-within:border-black dark:focus-within:border-gray-400 transition-all">
+        <div className="md:hidden fixed inset-0 bg-background backdrop-blur-md z-50 flex flex-col animate-in fade-in zoom-in-95 duration-150">
+          <div className="p-3 pt-4 border-b border-border">
+            <div className="relative flex items-center bg-secondary/50 border border-border rounded-full focus-within:border-ring transition-colors">
               <Search 
-                className="absolute left-4 w-5 h-5 text-muted-foreground shrink-0 cursor-pointer" 
+                className="absolute left-4 w-4 h-4 text-muted-foreground shrink-0 cursor-pointer" 
                 onClick={handleSearch}
               />
               <input
@@ -88,14 +90,15 @@ export function SearchArea({ isMobileSearchOpen, setIsMobileSearchOpen }: Search
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearch}
-                className="w-full bg-transparent border-none focus:outline-none text-base pl-12 pr-14 py-2 text-foreground placeholder:text-muted-foreground/70"
+                className="w-full bg-transparent border-none focus:outline-none text-sm pl-11 pr-12 py-2.5 text-foreground placeholder:text-muted-foreground"
                 placeholder="Search"
               />
               <button 
                 onClick={() => {
                   searchQuery ? setSearchQuery("") : setIsMobileSearchOpen(false);
                 }}
-                className="absolute right-3.5 p-1.5 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/60 rounded-full transition-colors"
+                title={searchQuery ? "Clear search" : "Close search"}
+                className="absolute right-3 p-1.5 shrink-0 text-muted-foreground hover:text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 rounded-full transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

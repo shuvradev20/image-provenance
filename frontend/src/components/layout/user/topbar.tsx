@@ -2,7 +2,7 @@
 
 import { useEffect, useState} from 'react';
 import Link from 'next/link';
-import {Menu, Search, Wallet, Loader2} from 'lucide-react';
+import {Menu, Search, Wallet, Loader2, AlertTriangle} from 'lucide-react';
 import { useUIStore } from '@/store/useUIStore';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
@@ -29,67 +29,81 @@ export function Topbar() {
   return (
     <>
       {isWalletMismatch && (
-        <div className="fixed top-0 inset-x-0 z-100 bg-red-500 text-white text-xs sm:text-sm py-2.5 px-4 text-center font-medium shadow-md">
-          ⚠️ Wallet Mismatch Detected! Please switch back to your registered wallet ({formatAddress(user?.walletAddress || '')}) in MetaMask.
+        <div className="fixed top-0 inset-x-0 z-50 bg-status-error/15 border-b border-status-error/30 text-status-error text-xs sm:text-sm py-2 px-4 text-center font-medium flex items-center justify-center gap-2 backdrop-blur-md">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>
+            Wallet Mismatch Detected! Switch back to registered wallet (
+            <span 
+              className="font-mono underline cursor-help" 
+              title={user?.walletAddress || ''}
+            >
+              {formatAddress(user?.walletAddress || '')}
+            </span>) in MetaMask.
+          </span>
         </div>
       )}
 
       <header className={cn(
-        "h-16 bg-white/90 dark:bg-[#1C1C1C]/90 border-b border-border backdrop-blur-md fixed w-full z-40 flex items-center justify-between px-4 transition-all duration-300",
-        isWalletMismatch ? "top-10" : "top-0"
+        "h-16 bg-background border-b border-border backdrop-blur-md fixed w-full z-40 flex items-center justify-between px-4 transition-[top] duration-300 ease-in-out",
+          isWalletMismatch ? "top-9" : "top-0"
       )}>
-        <div className="flex items-center gap-3 w-auto md:w-64">
+        <div className="flex items-center gap-3 w-auto md:w-60">
           <button
+            title="Toggle Sidebar"
             onClick={toggleSidebar}
-            className="hidden cursor-pointer md:block p-2 rounded-full hover:bg-muted transition-colors"
+            className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer"
             aria-label="Toggle Sidebar"
           >
-            <Menu className="w-5 h-5 text-muted-foreground" />
+            <Menu className="w-5 h-5" />
           </button>
 
           <Link href="/dashboard" className="flex items-center gap-2">
             <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
             <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
-            <span className="font-bold text-2xl tracking-tight text-foreground">ProveNode</span>
+            <span className="font-heading font-semibold text-xl tracking-tight text-foreground">ProveNode</span>
           </Link>
         </div>
 
         <SearchArea isMobileSearchOpen={isMobileSearchOpen} setIsMobileSearchOpen={setIsMobileSearchOpen} />
 
-        <div className="flex items-center sm:px-1 gap-2 md:gap-5 relative">
+        <div className="flex items-center pr-2 gap-2 md:gap-3 relative">
           <button
+            title="Search"
             onClick={() => setIsMobileSearchOpen(true)}
-            className="md:hidden p-2 rounded-full hover:bg-muted transition-colors "
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg text-muted-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 hover:text-foreground transition-colors"
           >
-            <Search className="w-5 h-5 text-muted-foreground" />
+            <Search className="w-5 h-5" />
           </button>
 
           {currentActiveWallet ? (
             <UserDropdown />
           ) : (
             <button
+              title={isConnectingWallet ? "Connecting to wallet..." : "Connect your Web3 wallet"}
               onClick={linkWalletBackend}
               disabled={isConnectingWallet}
               className={cn(
-                "flex items-center justify-center gap-2 border bg-black text-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-100 rounded-2xl transition-all font-medium",
-                "p-2 w-9 h-9 md:w-auto md:h-auto md:px-4 md:py-2 text-sm text-white",
-                isConnectingWallet ? "opacity-70 cursor-not-allowed" : "hover:opacity-90 dark:hover:border-neutral-500 shadow-sm"
+                "flex items-center justify-center gap-2 rounded-xl transition-all font-medium text-sm cursor-pointer",
+                "bg-primary text-primary-foreground",
+                "h-10 px-4 py-2",
+                isConnectingWallet 
+                  ? "opacity-70 cursor-not-allowed" 
+                  : "hover:opacity-90 active:scale-[0.98]"
               )}
             >
               {isConnectingWallet ? (
                 <>
-                  <Loader2 className="w-4 h-4 md:w-4 md:h-4 animate-spin" />
-                  <span className="hidden md:inline">Connecting...</span>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="hidden sm:inline">Connecting...</span>
                 </>
               ) : (
                 <>
-                  <Wallet className="w-4 h-4 md:w-4 md:h-4" />
-                  <span className="hidden md:inline">Connect Wallet</span>
+                  <Wallet className="w-4 h-4" />
+                  <span className="hidden sm:inline">Connect Wallet</span>
                 </>
               )}
             </button>
           )}
-
         </div>
       </header>
     </>
