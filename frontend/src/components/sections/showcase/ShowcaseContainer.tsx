@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicHeroCard, PublicProfileProps } from "./PublicHeroCard";
 import { AssetCard, AssetData } from "../explore/AssetCard";
@@ -49,7 +49,6 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
       setPagination(payload.pagination);
 
     } catch (err: any) {
-      console.error("Failed to load showcase data:", err);
       if (err?.response?.status === 404) {
         setError("User profile not found.");
       } else {
@@ -77,13 +76,13 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
   if (loading) {
     return (
-      <div className="w-full space-y-12">
+      <div className="w-full space-y-8 pb-18 md:pb-8">
         <PublicHeroSkeleton />
 
         <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-600/50 pb-2">
-            <div className="h-7 w-48 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
-            <div className="h-4 w-16 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse" />
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <div className="h-6 w-40 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+            <div className="h-4 w-12 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -98,17 +97,24 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
   if (error || !profile) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center text-zinc-400 gap-4">
-        <p className="text-zinc-300 text-lg font-medium">{error || "Profile not found"}</p>
-        <Button variant="outline" onClick={() => fetchShowcaseData(1)}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Retry
+      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center text-muted-foreground gap-4 px-4">
+        <div className="flex items-center gap-2 text-status-error text-sm font-medium text-center">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error || "Profile not found"}</span>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => fetchShowcaseData(1)}
+          className="text-xs font-medium cursor-pointer border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800"
+        >
+          <RefreshCw className="w-3.5 h-3.5 mr-2" /> Retry
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-12 pb-10">
+    <div className="w-full space-y-8 pb-18 md:pb-8">
         <PublicHeroCard 
             fullName={profile.fullName}
             bio={profile.bio}
@@ -122,17 +128,17 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
 
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-borde pb-2">
-          <h2 className="text-xl font-semibold text-foreground tracking-tight">
+          <h2 className="text-sm font-medium text-foreground tracking-tight">
             Registered Assets
           </h2>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs font-mono text-muted-foreground">
             {pagination?.totalImages || assets.length} Items
           </span>
         </div>
 
         {assets.length === 0 ? (
-          <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-            <p className="text-muted-foreground">This creator hasn't registered any assets yet.</p>
+          <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card/50">
+            <p className="text-muted-foreground text-sm">This creator hasn't registered any assets yet.</p>
           </div>
         ) : (
           <>
@@ -143,15 +149,15 @@ export const ShowcaseContainer = ({ walletAddress }: ShowcaseContainerProps) => 
             </div>
 
             {pagination?.hasNextPage && (
-              <div className="flex justify-center pb-2 mb-8 sm:mb-0">
+              <div className="flex justify-center pt-2">
                 <Button 
                   variant="outline" 
                   onClick={handleLoadMore} 
                   disabled={fetchingMore}
-                  className="cursor-pointer rounded-full px-4 h-8 border border-border bg-forground text-forground hover:bg-muted hover:text-forground/50 transition-all duration-300 min-w-20"
+                  className="cursor-pointer rounded-full px-5 h-9 text-xs font-medium border border-border bg-card text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-all duration-200 min-w-28"
                 >
                   {fetchingMore ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-2 text-muted-foreground" />
                   ) : null}
                   {fetchingMore ? "Loading..." : "Load More"}
                 </Button>

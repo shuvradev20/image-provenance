@@ -1,38 +1,52 @@
 export const PublicHeroSkeleton = () => {
   return (
-    <div className="overflow-hidden border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 relative w-full rounded-xl">
-      <div className="relative h-48 sm:h-64 w-full bg-gray-100 dark:bg-zinc-900 animate-pulse border-b border-gray-100 dark:border-zinc-800" />
-      <div className="relative px-6 pb-8 pt-0 sm:px-10 sm:pb-10 sm:pt-0">
-        <div className="flex justify-between items-start -mt-16 sm:-mt-20 mb-4">
+    <div className="p-0 overflow-hidden bg-card dark:bg-zinc-900/60 relative w-full rounded-xl shadow-none border border-border">
+      <div className="relative h-44 sm:h-60 w-full bg-zinc-200 dark:bg-zinc-800/80 animate-pulse m-0 p-0 rounded-t-xl overflow-hidden" />
+
+      <div className="relative px-6 pb-8 pt-0 sm:px-8 sm:pb-8 sm:pt-0">
+        
+        <div className="flex justify-between items-start -mt-14 sm:-mt-16 mb-4">
           <div className="relative">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 border-4 border-white dark:border-zinc-950 rounded-full bg-gray-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-card bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 mt-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <div className="h-8 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse w-48 sm:w-64" />
-              <div className="h-6 bg-gray-200 dark:bg-zinc-800 rounded-full animate-pulse w-20" />
+        <div className="flex flex-col gap-4 mt-1">
+          <div className="flex flex-col gap-4 sm:gap-0 sm:block">
+
+            <div className="order-1 flex flex-wrap items-center gap-2.5 sm:inline-flex sm:mr-3">
+              <div className="h-6 w-40 sm:w-52 bg-zinc-200 dark:bg-zinc-800 rounded-md animate-pulse" />
+              <div className="h-5 w-20 bg-zinc-200 dark:bg-zinc-800 rounded-full animate-pulse" />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="h-4 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse w-36 sm:w-44" />
-              <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-900 animate-pulse" />
+
+            <div className="order-2 flex flex-col gap-2 mt-2 sm:mt-3 max-w-3xl">
+              <div className="h-3.5 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-full" />
+              <div className="h-3.5 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-4/5" />
             </div>
+
+            <div className="order-3 flex flex-col sm:block sm:float-right sm:-mt-12 sm:mb-4 w-full sm:w-auto mt-2">
+              <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-24 mb-1.5" />
+              <div className="flex items-center gap-2">
+                <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-36 sm:w-48" />
+                <div className="w-6 h-6 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+              </div>
+            </div>
+
           </div>
-          <div className="flex flex-col gap-2 mt-1 max-w-3xl">
-            <div className="h-4 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse w-full" />
-            <div className="h-4 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse w-5/6" />
+
+          <div className="hidden sm:block clear-both" />
+
+          <div className="order-4 flex flex-col gap-1 sm:-mt-6">
+            <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-20" />
+            <div className="h-3.5 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-28" />
           </div>
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-4 h-4 rounded bg-gray-200 dark:bg-zinc-800 animate-pulse" />
-            <div className="h-3 bg-gray-200 dark:bg-zinc-800 rounded animate-pulse w-24" />
+
+          <div className="order-5 flex items-center gap-2 mt-1 -ml-1">
+            <div className="w-7 h-7 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="w-7 h-7 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+            <div className="w-7 h-7 rounded-md bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
           </div>
-          <div className="flex items-center gap-3 mt-2">
-            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-900 animate-pulse" />
-            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-900 animate-pulse" />
-            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-900 animate-pulse" />
-          </div>
+
         </div>
       </div>
     </div>
