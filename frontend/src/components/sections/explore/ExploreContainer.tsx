@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AssetCard, AssetData } from "./AssetCard";
 import { getAllImagesApi } from "@/lib/api/image";
-import { Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AssetCardSkeleton } from "./AssetCardSkeleton";
 
@@ -64,7 +64,7 @@ export const ExploreContainer = () => {
 
   if (loading) {
     return (
-      <div className="w-full space-y-8 pb-10">
+      <div className="w-full space-y-8 pb-18 md:pb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <AssetCardSkeleton key={i} />
@@ -76,20 +76,27 @@ export const ExploreContainer = () => {
 
   if (error) {
     return (
-      <div className="w-full min-h-[60vh] flex flex-col items-center justify-center text-zinc-400 gap-4">
-        <p className="text-red-400">{error}</p>
-        <Button variant="outline" onClick={() => fetchAssets(1)}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Retry
+      <div className="w-full min-h-[50vh] flex flex-col items-center justify-center text-muted-foreground gap-4 px-4">
+        <div className="flex items-center gap-2 text-status-error text-sm font-medium text-center">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => fetchAssets(1)}
+          className="text-xs font-medium cursor-pointer border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800"
+        >
+          <RefreshCw className="w-3.5 h-3.5 mr-2" /> Retry
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-8 pb-18 md:pb-8">
       {assets.length === 0 ? (
-        <div className="text-center py-20 border border-dashed border-zinc-800 rounded-xl bg-zinc-950/30">
-          <p className="text-zinc-500">No verified assets found in the network yet.</p>
+        <div className="text-center py-20 border border-dashed border-border rounded-xl bg-card/50">
+          <p className="text-muted-foreground text-sm">No verified assets found in the network yet.</p>
         </div>
       ) : (
         <>
@@ -100,15 +107,15 @@ export const ExploreContainer = () => {
           </div>
 
           {pagination?.hasNextPage && (
-            <div className="flex justify-center pb-4">
+            <div className="flex justify-center">
               <Button 
                 variant="outline" 
                 onClick={handleLoadMore} 
                 disabled={fetchingMore}
-                className="cursor-pointer rounded-full px-4 h-8 border border-border bg-forground text-forground hover:bg-muted hover:text-forground/50 transition-all duration-300 min-w-20"
+                className="cursor-pointer rounded-full px-5 h-9 text-xs font-medium border border-border bg-card text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-all duration-200 min-w-28"
               >
                 {fetchingMore ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin mr-2 text-muted-foreground" />
                 ) : null}
                 {fetchingMore ? "Loading..." : "Load More"}
               </Button>
