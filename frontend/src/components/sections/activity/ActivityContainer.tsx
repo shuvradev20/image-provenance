@@ -73,7 +73,7 @@ export const ActivityContainer: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-8 pb-18 md:pb-8">
       <ActivityStatsCards stats={stats} isLoading={isStatsLoading} />
 
       <ActivityTable

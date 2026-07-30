@@ -41,58 +41,58 @@ export const ActivityStatsCards: React.FC<ActivityStatsCardsProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div className="bg-card border border-border rounded-xl p-5 transition">
+      <div className="bg-card dark:bg-zinc-900/60 border border-border rounded-xl p-5 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/60 transition">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-muted-foreground text-xs uppercase">
+          <span className="text-muted-foreground text-[10px] font-mono tracking-wider uppercase">
             Transactions
           </span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-sm font-mono text-foreground">
             {stats?.totalTransactions?.toLocaleString() || 0}
           </span>
-          <span className="text-xs px-1.5 text-foreground">
+          <span className="text-[10px] font-mono text-muted-foreground">
             +{stats?.tx24hCount || 0} in 24h
           </span>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 transition">
+      <div className="bg-card dark:bg-zinc-900/60 border border-border rounded-xl p-5 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/60 transition">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-muted-foreground text-xs uppercase">
+          <span className="text-muted-foreground text-[10px] font-mono tracking-wider uppercase">
             Average Transaction Fee (24h)
           </span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-sm font-mono text-foreground">
             {stats?.avgGasEth || "0.00021 ETH"}
           </span>
-          <span className="text-xs text-muted-foreground">Arbitrum L2</span>
+          <span className="text-[10px] font-mono text-muted-foreground">Arbitrum L2</span>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 transition">
+      <div className="bg-card dark:bg-zinc-900/60 border border-border rounded-xl p-5 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/60 transition">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-muted-foreground text-xs uppercase">
+          <span className="text-muted-foreground text-[10px] font-mono tracking-wider uppercase">
             Platform Totals
           </span>
         </div>
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-sm font-mono text-foreground">
             {stats?.totalVerifiedAssets || 0}
           </span>
-          <span className="text-xs text-muted-foreground">Assets</span>
-          <span className="h-4 border-r border-border my-auto"></span>
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-[10px] font-mono text-muted-foreground">Assets</span>
+          <span className="h-3 border-r border-border my-auto"></span>
+          <span className="text-sm font-mono text-foreground">
             {stats?.totalRegisteredUsers || 0}
           </span>
-          <span className="text-xs text-muted-foreground">Users</span>
+          <span className="text-[10px] font-mono text-muted-foreground">Users</span>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 transition">
+      <div className="bg-card dark:bg-zinc-900/60 border border-border rounded-xl p-5 hover:bg-zinc-200/80 dark:hover:bg-zinc-800/60 transition">
         <div className="flex items-center mb-2">
-          <span className="text-muted-foreground text-xs uppercase">
+          <span className="text-muted-foreground text-[10px] font-mono tracking-wider uppercase">
             Last 14-Day Activity
           </span>
         </div>
@@ -126,7 +126,7 @@ export const ActivityStatsCards: React.FC<ActivityStatsCardsProps> = ({
 
             return (
               <>
-                <div className="flex flex-col justify-between h-full text-[9px] text-muted-foreground font-mono pr-1.5 select-none border-r border-border/40">
+                <div className="flex flex-col justify-between h-full text-[9px] text-muted-foreground font-mono pr-1.5 select-none border-r border-border">
                   <span>{maxY}</span>
                   <span>{minY}</span>
                 </div>
@@ -137,15 +137,6 @@ export const ActivityStatsCards: React.FC<ActivityStatsCardsProps> = ({
                     className="w-full h-full overflow-visible"
                     preserveAspectRatio="none"
                   >
-                    <line
-                      x1="0"
-                      y1={svgHeight - 2}
-                      x2={svgWidth}
-                      y2={svgHeight - 2}
-                      stroke="currentColor"
-                      strokeDasharray="2 2"
-                      className="text-border/60"
-                    />
                     <path
                       d={pathD}
                       fill="none"
@@ -153,7 +144,7 @@ export const ActivityStatsCards: React.FC<ActivityStatsCardsProps> = ({
                       strokeWidth="1"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-muted-foreground/50"
+                      className="text-muted-foreground/60"
                     />
                   </svg>
                 </div>

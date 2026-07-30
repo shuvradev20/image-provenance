@@ -10,7 +10,7 @@ export default async function ShowcasePage({ params }: ShowcasePageProps) {
   const { walletAddress } = await params;
 
   return (
-    <div className="h-full animate-in fade-in">
+    <div className="w-full h-full animate-in fade-in duration-300">
         <ShowcaseContainer walletAddress={walletAddress} />
     </div>
   );

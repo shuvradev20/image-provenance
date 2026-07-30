@@ -40,24 +40,53 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
   };
 
   const getMethodBadge = (eventType: string) => {
-    const badgeStyles: Record<string, string> = {
-      UserRegistered: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/50",
-      ImageMinted: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800/50",
-      MetadataUpdated: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/50",
-      ImageTransferred: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800/50",
-      ImageBurned: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/50",
+    let styleConfig = {
+      color: "var(--status-success)",
+      bg: "color-mix(in oklch, var(--status-success) 12%, transparent)",
+      border: "color-mix(in oklch, var(--status-success) 25%, transparent)",
     };
 
-    const defaultStyle = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
+    if (eventType === "MetadataUpdated") {
+      styleConfig = {
+        color: "var(--status-warning)",
+        bg: "color-mix(in oklch, var(--status-warning) 12%, transparent)",
+        border: "color-mix(in oklch, var(--status-warning) 25%, transparent)",
+      };
+    } else if (eventType === "ImageBurned") {
+      styleConfig = {
+        color: "var(--status-error)",
+        bg: "color-mix(in oklch, var(--status-error) 12%, transparent)",
+        border: "color-mix(in oklch, var(--status-error) 25%, transparent)",
+      };
+    } else if (eventType === "ImageTransferred") {
+      styleConfig = {
+        color: "oklch(0.65 0.20 290)",
+        bg: "color-mix(in oklch, oklch(0.65 0.20 290) 12%, transparent)",
+        border: "color-mix(in oklch, oklch(0.65 0.20 290) 25%, transparent)",
+      };
+    } else if (eventType === "ImageMinted") {
+      styleConfig = {
+        color: "oklch(0.65 0.18 230)",
+        bg: "color-mix(in oklch, oklch(0.65 0.18 230) 12%, transparent)",
+        border: "color-mix(in oklch, oklch(0.65 0.18 230) 25%, transparent)",
+      };
+    }
 
     return (
-      <span className={`px-2.5 py-0.5 rounded-md text-xs font-normal border transition-colors whitespace-nowrap ${badgeStyles[eventType] || defaultStyle}`}>
+      <span
+        style={{
+          color: styleConfig.color,
+          backgroundColor: styleConfig.bg,
+          borderColor: styleConfig.border,
+        }}
+        className="px-2 py-0.5 rounded-md text-[10px] font-mono border whitespace-nowrap inline-block"
+      >
         {eventType || "Transfer"}
       </span>
     );
   };
 
-  const formatAge = (timestamp?: string | number) => {
+  const formatCompactTime = (timestamp?: string | number) => {
     if (!timestamp) return "---";
 
     const now = new Date().getTime();
@@ -65,7 +94,7 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
     const diffInSeconds = Math.floor((now - past) / 1000);
 
     if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-    
+
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
 
@@ -83,50 +112,50 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
 
   return (
     <div className="w-full space-y-3">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onTabChange("ALL")}
-          className={`py-1.5 px-3 rounded-lg text-sm transition cursor-pointer border ${
+          className={`py-1.5 px-3.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
             currentTab === "ALL"
-              ? "bg-primary text-primary-foreground"
-              : "bg-transparent border-border hover:bg-muted/50"
+              ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
+              : "bg-card dark:bg-zinc-900/60 text-muted-foreground border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800"
           }`}
         >
           All
         </button>
         <button
           onClick={() => onTabChange("MY_ACTIVITY")}
-          className={`py-1.5 px-3 rounded-lg text-sm transition cursor-pointer border ${
+          className={`py-1.5 px-3.5 rounded-lg text-xs font-medium transition cursor-pointer border ${
             currentTab === "MY_ACTIVITY"
-              ? "bg-primary text-primary-foreground"
-              : "bg-transparent border-border hover:bg-muted/50"
+              ? "bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
+              : "bg-card dark:bg-zinc-900/60 text-muted-foreground border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800"
           }`}
         >
           My Activity
         </button>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="bg-card dark:bg-zinc-900/60 border border-border rounded-xl overflow-hidden">
         <div className="overflow-x-auto w-full scrollbar-thin scrollbar-thumb-muted">
           <table className="w-full text-left min-w-200">
-            <thead className="bg-muted text-sm font-normal border-b border-border">
+            <thead className="bg-zinc-100/60 dark:bg-zinc-900/40 text-muted-foreground text-[10px] font-mono tracking-wider uppercase border-b border-border">
               <tr>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">Transaction Hash</th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">Method</th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">Block</th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">Age</th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">From</th>
-                <th className="py-3 px-4 font-normal w-6 text-center"></th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">To</th>
-                <th className="py-3 px-4 font-normal whitespace-nowrap">Transaction Fee</th>
-                <th className="py-3 px-4 font-normal text-right whitespace-nowrap">Action</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">Transaction Hash</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">Method</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">Block</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">Age</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">From</th>
+                <th className="py-3 px-4 font-medium w-6 text-center"></th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">To</th>
+                <th className="py-3 px-4 font-medium whitespace-nowrap">Transaction Fee</th>
+                <th className="py-3 px-4 font-medium text-right whitespace-nowrap">Action</th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 font-sans text-xs font-normal">
+            <tbody className="divide-y divide-border text-foreground text-xs font-normal">
               {!logs || logs.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-12 text-slate-400 font-sans text-xs font-normal">
+                  <td colSpan={10} className="text-center py-12 text-muted-foreground font-mono text-xs">
                     No activity logs found.
                   </td>
                 </tr>
@@ -138,15 +167,16 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                   const targetKey = `${idx}-target`;
 
                   return (
-                    <tr key={log._id || idx} className="hover:bg-muted/50 transition-colors">
-                      <td className="py-3 px-4 text-xs font-normal whitespace-nowrap">
+                    <tr key={log._id || idx} className="hover:bg-zinc-200/80 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-foreground cursor-pointer">
+                          <span title={log.transactionHash || ""} className="font-mono text-[10px] text-foreground tracking-tight hover:underline cursor-pointer">
                             {truncate(log.transactionHash)}
                           </span>
                           <button
+                            title="Copy"
                             onClick={() => handleCopy(log.transactionHash, txKey)}
-                            className="text-foreground/50 hover:text-foreground cursor-pointer transition"
+                            className="text-muted-foreground hover:text-foreground cursor-pointer transition"
                           >
                             {copiedKey === txKey ? (
                               <CopyCheck className="w-3.5 h-3.5 text-foreground" />
@@ -157,26 +187,29 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-xs font-normal whitespace-nowrap">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         {getMethodBadge(log.eventType)}
                       </td>
 
-                      <td className="py-3 px-4 text-xs font-normal text-foreground cursor-pointer whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono text-[10px] text-foreground whitespace-nowrap">
                         {log.blockNumber ? `${log.blockNumber}` : "---"}
                       </td>
 
-                      <td className="py-3 px-4 text-xs font-normal text-foreground whitespace-nowrap">
-                        {formatAge(log.blockTimestamp)}
+                      <td className="py-3 px-4 font-mono text-[10px] text-muted-foreground whitespace-nowrap">
+                        <span title={log.blockTimestamp ? new Date(log.blockTimestamp).toLocaleString() : ""}>
+                          {formatCompactTime(log.blockTimestamp)}
+                        </span>
                       </td>
 
-                      <td className="py-3 px-4 text-xs font-normal whitespace-nowrap">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <span className="text-foreground cursor-pointer">
+                          <span title={log.actor || ""} className="font-mono text-[10px] text-foreground tracking-tight cursor-pointer hover:underline">
                             {truncate(log.actor)}
                           </span>
                           <button
+                            title="Copy"
                             onClick={() => handleCopy(log.actor, actorKey)}
-                            className="text-foreground/50 hover:text-foreground cursor-pointer transition"
+                            className="text-muted-foreground hover:text-foreground cursor-pointer transition"
                           >
                             {copiedKey === actorKey ? (
                               <CopyCheck className="w-3.5 h-3.5 text-foreground" />
@@ -187,20 +220,21 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3 px-1 text-center text-xs font-normal whitespace-nowrap">
-                        <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800/50 mx-auto">
+                      <td className="py-3 px-1 text-center whitespace-nowrap">
+                        <div className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-muted-foreground flex items-center justify-center border border-border mx-auto">
                           <ArrowRight className="w-3 h-3" />
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-xs font-normal whitespace-nowrap">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <span className="text-foreground cursor-pointer">
+                          <span title={targetAddress} className="font-mono text-[10px] text-foreground tracking-tight cursor-pointer hover:underline">
                             {truncate(targetAddress)}
                           </span>
                           <button
+                            title="Copy"
                             onClick={() => handleCopy(targetAddress, targetKey)}
-                            className="text-foreground/50 hover:text-foreground cursor-pointer transition"
+                            className="text-muted-foreground hover:text-foreground cursor-pointer transition"
                           >
                             {copiedKey === targetKey ? (
                               <CopyCheck className="w-3.5 h-3.5 text-foreground" />
@@ -211,7 +245,7 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 font-mono text-xs font-normal text-foreground whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono text-[10px] text-foreground whitespace-nowrap">
                         {log.transactionFee 
                           ? `${log.transactionFee} ETH` 
                           : log.gasUsed 
@@ -219,8 +253,9 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                           : "---"}
                       </td>
 
-                      <td className="py-3 px-4 text-right text-xs font-normal whitespace-nowrap">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
                         <a
+                          title="View on Arbiscan Explorer"
                           href={
                             log.transactionHash
                               ? `https://sepolia.arbiscan.io/tx/${log.transactionHash}`
@@ -228,10 +263,10 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
                           }
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-normal rounded border transition ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono rounded-md border transition ${
                             !log.transactionHash
                               ? "pointer-events-none bg-muted text-muted-foreground border-border"
-                              : "bg-muted hover:bg-muted/50 text-foreground border-border"
+                              : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-foreground border-border"
                           }`}
                         >
                           View on Arbiscan <ExternalLink className="w-3 h-3 text-muted-foreground" />
@@ -246,23 +281,23 @@ export const ActivityTable: React.FC<ActivityTableProps> = ({
         </div>
 
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 font-sans">
-            <span className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
-              Page <strong className="text-slate-700 dark:text-slate-200">{pagination.currentPage}</strong> of{" "}
-              <strong className="text-slate-700 dark:text-slate-200">{pagination.totalPages}</strong> ({pagination.totalLogs} total logs)
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3 border-t border-border bg-zinc-100/50 dark:bg-zinc-900/40 font-mono text-[10px]">
+            <span className="text-muted-foreground text-center sm:text-left">
+              Page <strong className="text-foreground">{pagination.currentPage}</strong> of{" "}
+              <strong className="text-foreground">{pagination.totalPages}</strong> ({pagination.totalLogs} total logs)
             </span>
             <div className="flex items-center gap-2">
               <button
                 disabled={pagination.currentPage === 1 || isLoading}
                 onClick={() => onPageChange(pagination.currentPage - 1)}
-                className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                className="px-3 py-1 bg-card dark:bg-zinc-900 border border-border text-foreground rounded-md disabled:opacity-50 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Previous
               </button>
               <button
                 disabled={!pagination.hasNextPage || isLoading}
                 onClick={() => onPageChange(pagination.currentPage + 1)}
-                className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded text-xs disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                className="px-3 py-1 bg-card dark:bg-zinc-900 border border-border text-foreground rounded-md disabled:opacity-50 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Next
               </button>
