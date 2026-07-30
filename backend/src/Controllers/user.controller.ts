@@ -6,7 +6,6 @@ import { type CustomRequest } from "../Middlewares/auth.middleware.js";
 import { User } from "../Models/user.models.js";
 import { Image } from "../Models/image.models.js";
 import { uploadBufferToCloudinary, deleteFromCloudinary } from "../Utils/cloudinary.js";
-import fs from "fs/promises"
 
 
 

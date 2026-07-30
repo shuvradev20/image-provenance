@@ -69,7 +69,6 @@ const getActivityLogs = asyncHandler(async (req: Request, res: Response) => {
  * @description Fetches system-wide statistical metrics and 24h/14-day activity trends for the Dashboard Cards.
  */
 const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
-    console.log("Calculating ProveNode system activity stats...");
 
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -103,7 +102,6 @@ const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
         ])
     ]);
 
-    // Format chart data for frontend Chart.js / Recharts components
     const activityTrend = chartRawData.map((item) => ({
         date: item._id,
         transactions: item.count
@@ -114,7 +112,7 @@ const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
         tx24hCount,
         totalVerifiedAssets,
         totalRegisteredUsers,
-        avgGasEth: "0.00021 ETH", // Calculated baseline execution fee
+        avgGasEth: "0.00021 ETH", 
         activityTrend
     };
 

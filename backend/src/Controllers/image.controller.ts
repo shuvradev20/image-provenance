@@ -306,7 +306,8 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
 
     await Activity.create({
         eventType: 'ImageMinted',
-        actor: customReq.user.walletAddress!,
+        actor: customReq.user.walletAddress!, 
+        targetUser: config.contractAddress,   
         transactionHash: transactionHash,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
@@ -591,8 +592,8 @@ const confirmMetadataUpdate = asyncHandler(async (req: Request, res: Response) =
 
     await Activity.create({
         eventType: 'MetadataUpdated',
-        actor: customReq.user.walletAddress!,
-        targetUser: config.contractAddress,
+        actor: customReq.user.walletAddress!, // User Wallet
+        targetUser: config.contractAddress,   // ProveNode Smart Contract Address
         transactionHash: transactionHash,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
@@ -693,7 +694,7 @@ export const confirmImageTransfer = asyncHandler(async (req: Request, res: Respo
 
     await Activity.create({
         eventType: 'ImageTransferred',
-        actor: customReq.user.walletAddress!,   
+        actor: customReq.user.walletAddress!,  
         targetUser: newOwnerWallet.toLowerCase(), 
         transactionHash: transactionHash,
         blockNumber: receipt.blockNumber,
@@ -795,8 +796,8 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
 
     await Activity.create({
         eventType: 'ImageBurned',
-        actor: customReq.user.walletAddress!,
-        targetUser: config.contractAddress,
+        actor: customReq.user.walletAddress!,  // User Wallet
+        targetUser: '0x0000000000000000000000000000000000000000', // Null Address
         transactionHash: transactionHash,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
