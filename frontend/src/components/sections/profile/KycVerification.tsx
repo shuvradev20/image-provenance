@@ -68,58 +68,63 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
   const selfiePreview = selfieFile instanceof File ? URL.createObjectURL(selfieFile) : null;
 
   return (
-    <Card id="kyc-section" className="p-0 overflow-hidden bg-card border border-border backdrop-blur-sm">
+    <Card id="kyc-section" className="p-0 overflow-hidden bg-card dark:bg-zinc-900/60 backdrop-blur-sm shadow-none rounded-xl">
       
-      <CardHeader className="bg-muted rounded-t-xl border-b border-border/50 px-6 pt-6 sm:px-10 sm:pt-8 pb-5 m-0">
-        <CardTitle className="text-xl flex items-center gap-2 text-foreground">
-          <ShieldAlert className="w-5 h-5 text-blue-500" /> Identity Verification (KYC)
+      <CardHeader className="bg-zinc-200/30 dark:bg-zinc-900/50 rounded-t-xl border border-border px-6 pt-1 pb-4 sm:px-8 sm:pt-6 m-0">
+        <CardTitle className="text-sm font-medium flex items-center gap-2 text-foreground">
+          <ShieldAlert className="w-4 h-4 text-blue-500" /> Identity Verification (KYC)
         </CardTitle>
-        <CardDescription className="mt-1">
+        <CardDescription className="text-xs text-muted-foreground mt-0.5">
           Verify your identity to protect your work on ProveNode.
           Your data is encrypted and handled securely.
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="px-6 pb-6 pt-6 sm:px-10 sm:pb-10">
+      <CardContent className="px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="governmentId"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Government ID Number (NID/Passport)</FormLabel>
+                <FormItem className="max-w-md">
+                  <FormLabel className="text-xs font-medium">Government ID Number (NID/Passport)</FormLabel>
                   <FormControl>
-                    <Input id="governmentId" className="bg-muted text-sm" placeholder="Enter your 10-17 digit ID number" {...field} />
+                    <Input 
+                      id="governmentId" 
+                      className="bg-zinc-200/30 dark:bg-zinc-900/50 text-xs border-border h-9 font-mono" 
+                      placeholder="Enter 10-17 digit ID number" 
+                      {...field} 
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[10px] font-mono" />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <FormField
                 control={form.control}
                 name="govIdImage"
                 render={({ field: { value, onChange, ...field } }) => (
                   <FormItem>
-                    <FormLabel>Front of Government ID</FormLabel>
+                    <FormLabel className="text-xs font-medium">Front of Government ID</FormLabel>
                     <FormControl>
-                      <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-muted/20 border-muted-foreground/30 hover:bg-muted/50 hover:border-primary/50 transition-all overflow-hidden relative group">
+                      <label className="flex flex-col items-center justify-center w-full h-36 border border-dashed rounded-lg cursor-pointer bg-zinc-200/30 dark:bg-zinc-900/50 border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-colors overflow-hidden relative group" title="Upload Front of Government ID">
                         {govIdPreview ? (
                           <>
                             <img src={govIdPreview} alt="ID Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <p className="text-sm font-semibold text-foreground">Click to change image</p>
+                            <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <p className="text-xs font-medium text-foreground">Click to change image</p>
                             </div>
                           </>
                         ) : (
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <IdCard className="w-8 h-8 text-muted-foreground mb-3" />
-                            <p className="text-sm text-muted-foreground text-center px-4">
-                              <span className=" text-primary">Click to upload</span> or drag and drop
+                          <div className="flex flex-col items-center justify-center pt-4 pb-4">
+                            <IdCard className="w-6 h-6 text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground text-center px-4">
+                              <span className="font-medium text-foreground underline underline-offset-2">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WEBP (Max 5MB)</p>
+                            <p className="text-[10px] font-mono text-muted-foreground mt-1">JPEG, PNG, WEBP (Max 5MB)</p>
                           </div>
                         )}
                         <input
@@ -133,7 +138,7 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                         />
                       </label>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[10px] font-mono" />
                   </FormItem>
                 )}
               />
@@ -143,23 +148,23 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                 name="selfieWithGovId"
                 render={({ field: { value, onChange, ...field } }) => (
                   <FormItem>
-                    <FormLabel>Selfie Holding ID Card</FormLabel>
+                    <FormLabel className="text-xs font-medium">Selfie Holding ID Card</FormLabel>
                     <FormControl>
-                      <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-muted/20 border-muted-foreground/30 hover:bg-muted/50 hover:border-primary/50 transition-all overflow-hidden relative group">
+                      <label className="flex flex-col items-center justify-center w-full h-36 border border-dashed rounded-lg cursor-pointer bg-zinc-200/30 dark:bg-zinc-900/50 border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-colors overflow-hidden relative group" title="Upload Selfie Holding ID Card">
                         {selfiePreview ? (
                           <>
                             <img src={selfiePreview} alt="Selfie Preview" className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <p className="text-sm text-foreground">Click to change image</p>
+                            <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <p className="text-xs font-medium text-foreground">Click to change image</p>
                             </div>
                           </>
                         ) : (
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UserSquare className="w-8 h-8 text-muted-foreground mb-3" />
-                            <p className="text-sm text-muted-foreground text-center px-4">
-                              <span className=" text-primary">Click to upload</span> or drag and drop
+                          <div className="flex flex-col items-center justify-center pt-4 pb-4">
+                            <UserSquare className="w-6 h-6 text-muted-foreground mb-2" />
+                            <p className="text-xs text-muted-foreground text-center px-4">
+                              <span className="font-medium text-foreground underline underline-offset-2">Click to upload</span> or drag and drop
                             </p>
-                            <p className="text-xs text-muted-foreground mt-1">Make sure your face and ID are clear</p>
+                            <p className="text-[10px] font-mono text-muted-foreground mt-1">Make sure face & ID are clear</p>
                           </div>
                         )}
                         <input
@@ -173,17 +178,22 @@ export function KycVerification({ onSuccess }: KycVerificationProps) {
                         />
                       </label>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[10px] font-mono" />
                   </FormItem>
                 )}
               />
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-2">
+            <div className="flex justify-end pt-2">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full sm:w-auto h-9 text-xs px-4 rounded-md bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98] transition-all"
+                title="Submit KYC Verification Documents"
+              >
                 {isSubmitting ? (
                   <>
-                    <UploadCloud className="w-4 h-4 mr-2 animate-bounce" />
+                    <UploadCloud className="w-3.5 h-3.5 mr-2 animate-bounce" />
                     Uploading Documents...
                   </>
                 ) : (
