@@ -15,6 +15,7 @@ import { KycVerification } from "./KycVerification";
 
 import { profileSchema, type ProfileFormValues } from "@/lib/validations/profile";
 import { updateProfileInfoApi, getCurrentUserProfileApi } from "@/lib/api/user";
+import { KycCalloutBanner } from "./KycCalloutBanner";
 
 export function ProfileContainer() {
   const [isEditing, setIsEditing] = useState(false);
@@ -90,7 +91,7 @@ export function ProfileContainer() {
       const response = await updateProfileInfoApi(formData);
       const updatedUser = response.data;
       setUpdatedUser(updatedUser);
-      setUserData(updatedUser)
+      setUserData(updatedUser);
       toast.success("Profile updated successfully!");
       setIsEditing(false);
 
@@ -130,13 +131,13 @@ export function ProfileContainer() {
           setTimeout(() => {
             const kycSection = document.getElementById("kyc-section");
             if (kycSection) {
-              kycSection.scrollIntoView({ behavior: "smooth", block: "start" });
+              kycSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
               
               setTimeout(() => {
                 document.getElementById("governmentId")?.focus();
-              }, 500); 
+              }, 200);
             }
-          }, 100);
+          }, 150);
         }
         
         return willOpen;
@@ -153,14 +154,14 @@ export function ProfileContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-100">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-75">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20 sm:pb-8 sm:px-6 lg:px-8 space-y-6">
+    <div className="max-w-4xl mx-auto pb-18 md:pb-8 space-y-6">
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
           
@@ -181,14 +182,26 @@ export function ProfileContainer() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex justify-end gap-4 "
+              className="flex justify-end gap-3"
             >
-              <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleCancel} 
+                disabled={isSubmitting}
+                className="text-xs h-9 px-4 rounded-md border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800"
+                title="Discard changes"
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="text-xs h-9 px-4 rounded-md bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]"
+                title="Save changes to profile"
+              >
                 {isSubmitting ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+                  <><Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" /> Saving...</>
                 ) : "Save Changes"}
               </Button>
             </motion.div>
@@ -196,14 +209,21 @@ export function ProfileContainer() {
         </form>
       </FormProvider>
 
+      {kycStatus === "unverified" && !isEditing && !isKycOpen && (
+        <KycCalloutBanner 
+          onStartKyc={handleKycBadgeClick} 
+          isKycOpen={isKycOpen} 
+        />
+      )}
+
       <AnimatePresence>
         {isKycOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
+            initial={{ opacity: 0, y: -20, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="w-full"
           >
             <KycVerification onSuccess={handleKycSuccess} />
           </motion.div>

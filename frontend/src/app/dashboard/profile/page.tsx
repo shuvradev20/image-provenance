@@ -4,7 +4,7 @@ import { ProfileContainer } from "@/components/sections/profile/ProfileContainer
 
 export default function ProfilePage() {
   return (
-    <div className="container mx-auto w-full md:max-w-4xl">
+    <div className="w-full h-full animate-in fade-in duration-300">
       <ProfileContainer />
     </div>
   );
