@@ -9,8 +9,8 @@ export default async function AssetPage({ params }: Props) {
     const { hash } = await params;
 
     return (
-        <main className=" bg-background text-foreground">
+        <div className="w-full h-full animate-in fade-in duration-300">
             <AssetContainer hash={hash} />
-        </main>
+        </div>
     );
 }
