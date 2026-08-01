@@ -1,6 +1,6 @@
 export const AssetCardSkeleton = () => {
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card h-full flex flex-col">
+    <div className="overflow-hidden rounded-xl bg-card dark:bg-zinc-900/60 h-full flex flex-col">
       <div className="w-full aspect-square bg-muted/60 animate-pulse border-b border-border" />
       <div className="p-4 flex flex-col grow justify-between gap-3">
         <div className="h-4 bg-muted/80 rounded-md animate-pulse w-3/4" />

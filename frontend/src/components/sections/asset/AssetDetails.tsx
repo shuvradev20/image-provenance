@@ -71,37 +71,56 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
 
     if (onlyHeader) {
         return (
-            <div className="relative group animate-in fade-in transition-all w-full pb-8 border-b border-border/20">
+            <div className="relative group animate-in fade-in transition-all w-full pb-6">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
                         <div className="flex justify-between items-start gap-4">
                             <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-3 flex-wrap">
+                                <div className="flex items-center gap-2.5 flex-wrap">
                                     {isEditing ? (
-                                        <FormField control={form.control} name="title" render={({ field }) => (
-                                            <FormItem className="flex-1 min-w-50">
-                                                <FormLabel className="text-muted-foreground text-xs uppercase tracking-wider">Asset Title</FormLabel>
-                                                <FormControl>
-                                                    <Input className="text-2xl font-bold bg-transparent border border-border focus:border-foreground/50 h-12" {...field} disabled={isSubmitting} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
+                                        <FormField 
+                                            control={form.control} 
+                                            name="title" 
+                                            render={({ field }) => (
+                                                <FormItem className="flex-1 min-w-50">
+                                                    <FormLabel className="text-muted-foreground text-[10px] font-mono uppercase tracking-wider">Asset Title</FormLabel>
+                                                    <FormControl>
+                                                        <Input className="text-xs bg-transparent border border-border focus:border-foreground/50 h-10 rounded-md" {...field} disabled={isSubmitting} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
                                         )} />
                                     ) : (
-                                        <h1 className="text-xl font-semibold tracking-tight text-foreground capitalize">
+                                        <h1 className="text-sm md:text-base font-semibold tracking-tight text-foreground capitalize">
                                             {asset.title}
                                         </h1>
                                     )}
 
                                     {!isEditing && (
                                         asset.status === 'burned' ? (
-                                            <Badge variant="secondary" className="bg-destructive/10 text-destructive border-transparent py-1 px-3 pointer-events-none">
-                                                <Flame className="w-3.5 h-3.5 mr-1.5" />
+                                            <Badge 
+                                                variant="secondary" 
+                                                title="Asset Burned Permanently"
+                                                className="border border-transparent py-0.5 px-2.5 rounded-md font-mono text-[10px] font-medium transition-colors"
+                                                style={{
+                                                    backgroundColor: "color-mix(in oklch, var(--status-error) 12%, transparent)",
+                                                    color: "var(--status-error)",
+                                                    }}
+                                                >
+                                                <Flame className="w-3 h-3 mr-1" />
                                                 Burned
                                             </Badge>
                                         ) : (
-                                            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-transparent transition-colors py-1 px-3">
-                                                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                                            <Badge 
+                                                variant="secondary" 
+                                                title="Authentic Cryptographic Proof"
+                                                className="border border-transparent py-0.5 px-2.5 rounded-md font-mono text-[10px] font-medium transition-colors"
+                                                style={{
+                                                    backgroundColor: "color-mix(in oklch, var(--status-success) 12%, transparent)",
+                                                    color: "var(--status-success)",
+                                                }}
+                                            >
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
                                                 Authentic
                                             </Badge>
                                         )
@@ -109,12 +128,15 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                 </div>
 
                                 {isEditing ? (
-                                    <FormField control={form.control} name="assetCategory" render={({ field }) => (
+                                    <FormField 
+                                        control={form.control} 
+                                        name="assetCategory" 
+                                        render={({ field }) => (
                                         <FormItem className="w-full sm:w-1/2">
-                                            <FormLabel className="text-muted-foreground text-xs uppercase tracking-wider">Category</FormLabel>
+                                            <FormLabel className="text-muted-foreground text-[10px] font-mono uppercase tracking-wider">Category</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
                                                 <FormControl>
-                                                    <SelectTrigger className="bg-transparent border border-border w-full">
+                                                    <SelectTrigger className="bg-transparent border border-border rounded-md w-full text-xs">
                                                         <SelectValue placeholder="Category" />
                                                     </SelectTrigger>
                                                 </FormControl>
@@ -131,7 +153,7 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                         </FormItem>
                                     )} />
                                 ) : (
-                                    <span className="text-muted-foreground text-sm font-medium tracking-wide uppercase block">
+                                    <span className="text-muted-foreground text-[10px] font-mono tracking-wider uppercase block">
                                         {asset.assetCategory.replace('_', ' ')}
                                     </span>
                                 )}
@@ -142,31 +164,34 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                                     type="button"
                                     variant="ghost" 
                                     size="icon" 
+                                    title="Edit asset metadata"
                                     onClick={(e) => { e.preventDefault(); setIsEditing(true); }}
-                                    className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-muted rounded-full h-9 w-9 shrink-0"
+                                    className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-200/80 dark:hover:bg-zinc-800 rounded-md h-8 w-8 shrink-0"
                                 >
-                                    <Edit2 className="w-4 h-4 text-foreground/70" />
+                                    <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                                 </Button>
                             )}
                         </div>
 
                         {isEditing ? (
-                            <div className="mt-4">
-                                <FormField control={form.control} name="description" render={({ field }) => (
+                            <div className="mt-2">
+                                <FormField 
+                                    control={form.control} 
+                                    name="description" 
+                                    render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-muted-foreground text-xs uppercase tracking-wider">Description</FormLabel>
+                                        <FormLabel className="text-muted-foreground text-[10px] font-mono uppercase tracking-wider">Description</FormLabel>
                                         <FormControl>
-                                            <Textarea className="min-h-30 bg-transparent border border-border focus:border-foreground/50 resize-none" {...field} disabled={isSubmitting} />
+                                            <Textarea className="min-h-24 bg-transparent border border-border focus:border-foreground/50 rounded-md text-xs resize-none" {...field} disabled={isSubmitting} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
                             </div>
                         ) : (
-                           <div className="space-y-2">
-                                <h3 className="text-lg font-semibold text-foreground">Description</h3>
-                                <hr className="border-border" />
-                                <p className="text-foreground/80 leading-relaxed text-sm whitespace-pre-wrap">
+                           <div className="space-y-1.5 pt-1">
+                                <h3 className="text-sm font-medium text-foreground">Description</h3>
+                                <p className="text-muted-foreground leading-relaxed text-xs whitespace-pre-wrap">
                                     {asset.description}
                                 </p>
                             </div>
@@ -176,18 +201,18 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
                             {isEditing ? (
                                 <FormField control={form.control} name="tags" render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-muted-foreground text-xs uppercase tracking-wider">Tags</FormLabel>
+                                        <FormLabel className="text-muted-foreground text-[10px] font-mono uppercase tracking-wider">Tags</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Tags (comma separated)" className="bg-transparent border border-border focus:border-foreground/50" {...field} disabled={isSubmitting}/>
+                                            <Input placeholder="comma, separated, tags" className="bg-transparent border border-border text-xs rounded-md" {...field} disabled={isSubmitting}/>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )} />
                             ) : (
                                 asset.tags && asset.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {asset.tags.map((tag: string, i: number) => (
-                                            <Badge key={i} variant="outline" className="text-xs font-normal text-foreground/60 bg-muted/10 px-3 py-1 border-border/50 rounded-full">
+                                            <Badge key={i} variant="outline" className="text-[10px] font-mono text-muted-foreground bg-zinc-200/30 dark:bg-zinc-900/50 px-2 py-0.5 border-border rounded-md">
                                                 {tag.trim()}
                                             </Badge>
                                         ))}
@@ -198,34 +223,37 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
 
 
                         {isEditing && (
-                            <div className="pt-4 mt-2 border-t border-border/20">
-                                
+                            <div className="pt-3 border-t border-border">
                                 {txError && (
-                                    <div className="w-full mb-4 p-4 rounded-xl flex items-start gap-3 
-                                        bg-red-50 text-red-600 border border-red-100 
-                                        dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 
-                                        animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                                        <p className="text-sm font-medium leading-relaxed">
-                                            {txError}
-                                        </p>
+                                    <div
+                                        className="w-full mb-3 p-3 rounded-md flex items-start gap-2.5 text-xs font-mono"
+                                        style={{
+                                        backgroundColor: "color-mix(in oklch, var(--status-error) 10%, transparent)",
+                                        borderColor: "color-mix(in oklch, var(--status-error) 30%, transparent)",
+                                        color: "var(--status-error)",
+                                        }}
+                                    >
+                                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                                        <p className="leading-relaxed">{txError}</p>
                                     </div>
-                                )}
+                                    )}
 
-                                <div className="flex gap-3 justify-end">
+                                <div className="flex gap-2 justify-end">
                                     <Button 
                                         type="button" 
+                                        title="Cancel"
                                         variant="ghost" 
                                         onClick={() => {
                                             setIsEditing(false);
                                             setTxError(null);
                                         }} 
                                         disabled={isSubmitting}
+                                        className="cursor-pointer"
                                     >
                                         Cancel
                                     </Button>
-                                    <Button type="submit" disabled={isSubmitting} className="min-w-30">
-                                        {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "Save Changes"}
+                                    <Button title="Save Changes" type="submit" disabled={isSubmitting} className="min-w-24 cursor-pointer text-xs rounded-md">
+                                        {isSubmitting ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : "Save Changes"}
                                     </Button>
                                 </div>
                             </div>
@@ -237,28 +265,32 @@ export default function AssetDetails({ asset, isOwner, onUpdateSuccess, onlyHead
     }
 
     return (
-        <div className="w-full pt-6">
-            <div className="space-y-2">
-                <h3 className="text-lg font-semibold text-foreground">Technical Details</h3>
+        <div className="w-full pt-2 space-y-3">
+            <div className="space-y-1">
+                <h3 className="text-sm font-medium text-foreground">Technical Details</h3>
                 <hr className="border-border" />
             </div>
 
-            <div className="flex flex-col gap-3 pt-2">
+            <div className="flex flex-col gap-2 font-mono text-[10px] sm:text-xs">
                 {asset.fileDetails && (
-                    <>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Resolution</span>
-                            <span className="text-sm text-foreground">{asset.fileDetails.width} × {asset.fileDetails.height} px</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">Format</span>
-                            <span className="text-sm text-foreground">{asset.fileDetails.fileType}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm text-muted-foreground">File Size</span>
-                            <span className="text-sm text-foreground">{(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB</span>
-                        </div>
-                    </>
+                <>
+                    <div className="flex justify-between items-center py-0.5">
+                    <span className="text-muted-foreground">Resolution</span>
+                    <span className="text-foreground">
+                        {asset.fileDetails.width} × {asset.fileDetails.height} px
+                    </span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                    <span className="text-muted-foreground">Format</span>
+                    <span className="text-foreground uppercase">{asset.fileDetails.fileType}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                    <span className="text-muted-foreground">File Size</span>
+                    <span className="text-foreground">
+                        {(asset.fileDetails.fileSize / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                    </div>
+                </>
                 )}
             </div>
         </div>
