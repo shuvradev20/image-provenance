@@ -3,9 +3,7 @@
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { verifyImageApi } from "@/lib/api/image";
-
 import VerifyDropzone from "./VerifyDropzone";
-import VerifyLoading from "./VerifyLoading";
 import VerifyResultLeft from "./VerifyResultLeft";
 import VerifyResultRight from "./VerifyResultRight";
 
@@ -24,12 +22,10 @@ export default function VerifyContainer() {
     formData.append("image", selectedFile);
 
     try {
-      // Backend Verification Engine Request 🪄
       const res = await verifyImageApi(formData);
 
       if (res?.success && res?.data) {
         setResultData(res.data);
-        // Validating expected status types
         const backendStatus = res.data.status as VerifyStatus;
         if (["authentic", "edited", "unregistered"].includes(backendStatus)) {
           setStatus(backendStatus);
@@ -55,53 +51,48 @@ export default function VerifyContainer() {
     setResultData(null);
   }, []);
 
-  // --- State 1: IDLE (Top-Weighted Dropzone view) ---
-  if (status === "idle") {
+  if (status === "idle" || status === "loading") {
     return (
-      <main className="min-h-[calc(100vh-4.5rem)] w-full flex flex-col items-center justify-start pt-12 md:pt-16 px-4 pb-12">
-        <div className="max-w-2xl w-full text-center space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Verify Digital Asset
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
-              Upload an image to check its authenticity, ownership, and history on the blockchain.
-            </p>
-          </div>
-          <VerifyDropzone onDrop={handleVerification} />
+      <main className="w-full h-full flex flex-col items-center justify-start pt-12 sm:pt-16 p-4">
+        <div className="max-w-2xl w-full space-y-5">
+        <div className="space-y-1.5 text-left w-full">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Verify Digital Asset
+          </h1>
+          <p className="text-muted-foreground text-sm w-full">
+            Upload an image to check its authenticity, ownership, and history on the blockchain.
+          </p>
+        </div>
+
+        <VerifyDropzone 
+          onDrop={handleVerification} 
+          isLoading={status === "loading"}
+          selectedFile={file}
+        />
         </div>
       </main>
     );
   }
 
-  // --- State 2: LOADING ---
-  if (status === "loading") {
-    return <VerifyLoading file={file} />;
-  }
-
-  // --- State 3: RESULT VIEW (Authentic | Edited | Unregistered) ---
   return (
-    <div className="w-full min-h-[calc(100vh-72px)] lg:h-[calc(100vh-72px)] lg:overflow-hidden bg-background/50 flex justify-center">
-      <div className="flex flex-col lg:flex-row w-full max-w-300 h-auto lg:h-full gap-8 px-4 lg:px-6">
-        
-        {/* Left Side: Visual Workspace & Banner */}
-        <div className="w-full lg:w-[58%] h-auto lg:h-full lg:border-r border-border/40 flex items-center justify-center shrink-0 lg:py-10 lg:pr-8">
+    <div className="w-full flex items-center justify-center pb-4 lg:pb-0">
+      <div className="w-full max-w-7xl h-auto lg:h-[calc(100vh-112px)] flex flex-col lg:flex-row rounded-xl bg-card dark:bg-zinc-900/60 md:overflow-hidden">
+        <div className="w-full lg:w-[65%] h-87.5 lg:h-full relative p-4 lg:p-8 flex items-center justify-center shrink-0 overflow-hidden">
           <VerifyResultLeft
             status={status}
             file={file}
             resultData={resultData}
           />
+          <div className="hidden lg:block absolute right-0 top-0 bottom-0 my-6 w-px bg-border" />
         </div>
 
-        {/* Right Side: Details, Proofs & CTA */}
-        <div className="w-full lg:w-[42%] lg:h-full lg:overflow-y-auto flex flex-col gap-6 lg:py-10 pb-12 scroll-smooth custom-scrollbar">
+        <div className="w-full lg:w-[35%] h-auto lg:h-full lg:overflow-y-auto p-5 flex flex-col gap-5 custom-scrollbar shrink">
           <VerifyResultRight
             status={status}
             resultData={resultData}
             onReset={resetVerification}
           />
         </div>
-
       </div>
     </div>
   );

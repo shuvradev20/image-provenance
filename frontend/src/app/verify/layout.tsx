@@ -12,20 +12,23 @@ export default function VerifyLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen bg-background flex flex-col font-sans">
-            <header className="sticky top-0 z-50 w-full border-b border-border bg-background backdrop-blur">
-                <div className="w-full px-4 sm:px-8 flex h-18 items-center">
+        <div className="h-screen w-full flex flex-col font-sans overflow-hidden">
+            <header className="sticky top-0 z-50 w-full shrink-0 border-b border-border bg-background backdrop-blur-md">
+                <div className="w-full px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
                     <div className="flex items-center gap-6">   
-                        <Link href="/" className="flex items-center gap-2">
+                        <Link 
+                            href="/" 
+                            title="ProveNode Home"
+                            className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
                             <ProveNodeLogoLight className="w-5 h-5 block dark:hidden" />
                             <ProveNodeLogoDark className="w-5 h-5 hidden dark:block" />
-                            <span className="font-bold text-2xl tracking-tight text-foreground">ProveNode</span>
+                            <span className="font-heading font-semibold text-xl tracking-tight text-foreground">ProveNode</span>
                         </Link>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 flex flex-col">
+            <main className="flex-1 flex flex-col justify-center items-center bg-zinc-200/30 dark:bg-zinc-900/50 overflow-y-auto md:overflow-hidden p-4">
                 {children}
             </main>
         </div>
