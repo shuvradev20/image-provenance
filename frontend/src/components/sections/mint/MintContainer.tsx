@@ -6,9 +6,9 @@ import ActionPreCheckGuard from "@/components/guards/ActionPreCheckGuard";
 
 export default function MintContainer() {
     return (
-        <div className="w-full max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-4 md:pb-8">
+        <div className="w-full max-w-4xl mx-auto animate-in fade-in pb-18 md:pb-8">
             <ActionPreCheckGuard>
-                <div className=" bg-card border border-border rounded-2xl mb-16 sm:mb-0 p-4 lg:p-8">
+                <div className="bg-card dark:bg-zinc-900/60 rounded-xl p-6 lg:p-8 space-y-6">
                     <MintAssetForm />
                     <MintActionArea />
                 </div>

@@ -25,7 +25,7 @@ export default function ActionPreCheckGuard({ children }: { children: React.Reac
         return (
            <div className="flex justify-center w-full sm:h-[calc(100vh-130px)] overflow-y-auto sm:pt-10 sm:overflow-hidden">
                 <div className="w-full max-w-2xl">
-                    <div className="rounded-xl border border-border">
+                    <div className="rounded-xl bg-background dark:bg-zinc-900/60">
                         <div className="flex flex-col p-4 sm:p-8">
                             <div className="flex flex-col mb-5">
                                 <div className="flex items-center gap-2">
