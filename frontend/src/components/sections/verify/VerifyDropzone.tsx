@@ -1,16 +1,34 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { UploadCloud, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface VerifyDropzoneProps {
   onDrop: (file: File) => void;
+  isLoading?: boolean;
+  selectedFile?: File | null;
 }
 
-export default function VerifyDropzone({ onDrop }: VerifyDropzoneProps) {
+export default function VerifyDropzone({ 
+  onDrop, 
+  isLoading = false, 
+  selectedFile = null 
+}: VerifyDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl("");
+    }
+  }, [selectedFile]);
 
   const processFile = (file: File) => {
     if (!file) return;
@@ -30,66 +48,112 @@ export default function VerifyDropzone({ onDrop }: VerifyDropzoneProps) {
   };
 
   return (
-    <div
-      onClick={() => fileInputRef.current?.click()}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setIsDragging(true);
-      }}
-      onDragLeave={(e) => {
-        e.preventDefault();
-        setIsDragging(false);
-      }}
-      onDrop={(e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (e.dataTransfer.files?.[0]) {
-          processFile(e.dataTransfer.files[0]);
+    <div className="w-full max-w-2xl mx-auto">
+      <style jsx global>{`
+        @keyframes scanHorizontal {
+          0% {
+            left: -30%;
+            opacity: 0;
+          }
+          20% {
+            opacity: 1;
+          }
+          80% {
+            opacity: 1;
+          }
+          100% {
+            left: 110%;
+            opacity: 0;
+          }
         }
-      }}
-      className={`
-        cursor-pointer w-full max-w-xl mx-auto h-76 rounded-2xl 
-        border-2 border-dashed flex flex-col items-center justify-center 
-        p-6 text-center transition-all duration-200 select-none
-        ${
-          isDragging
-            ? "border-primary bg-primary/10"
-            : "border-border bg-card hover:border-primary/60 hover:bg-muted/30"
-        }
-      `}
-    >
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={(e) => {
-          if (e.target.files?.[0]) processFile(e.target.files[0]);
+      `}</style>
+
+      <div
+        onClick={() => !isLoading && fileInputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!isLoading) setIsDragging(true);
         }}
-        accept="image/jpeg, image/png, image/webp"
-        className="hidden"
-      />
+        onDragLeave={(e) => {
+          e.preventDefault();
+          if (!isLoading) setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          if (!isLoading && e.dataTransfer.files?.[0]) {
+            processFile(e.dataTransfer.files[0]);
+          }
+        }}
+        title={isLoading ? "Analyzing asset..." : "Click or drag and drop an image to verify asset authenticity"}
+        className={`
+          relative w-full h-72 rounded-xl border flex flex-col items-center justify-center 
+          p-6 text-center transition-all duration-200 select-none overflow-hidden
+          ${isLoading ? "cursor-wait border-primary/50 bg-card" : "cursor-pointer"}
+          ${
+            !isLoading && isDragging
+              ? "border-primary bg-primary/5 dark:bg-primary/10"
+              : !isLoading
+              ? "border-dashed border-border bg-card hover:border-primary/50 dark:hover:border-primary/40"
+              : ""
+          }
+        `}
+      >
+        <input
+          type="file"
+          ref={fileInputRef}
+          disabled={isLoading}
+          onChange={(e) => {
+            if (e.target.files?.[0]) processFile(e.target.files[0]);
+          }}
+          accept="image/jpeg, image/png, image/webp"
+          className="hidden"
+        />
 
-      <div className="mb-4 p-6 rounded-full bg-muted">
-        {isDragging ? (
-          <UploadCloud className="w-9 h-9 text-primary animate-bounce" />
+        {isLoading ? (
+          <>
+            {previewUrl && (
+              <Image
+                src={previewUrl}
+                alt="Scanning Asset"
+                fill
+                className="object-contain p-4 transition-opacity opacity-90"
+                priority
+              />
+            )}
+            <div className="absolute inset-0 pointer-events-none z-0" />
+            <div
+              className="absolute top-0 bottom-0 w-32 bg-linear-to-r from-transparent via-white/30 dark:via-white/15 to-transparent pointer-events-none z-10 backdrop-blur-[1px]"
+              style={{ animation: "scanHorizontal 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite" }}
+            />
+          </>
         ) : (
-          <ImageIcon className="w-9 h-9 text-muted-foreground" />
-        )}
-      </div>
+          <>
+            <div className="mb-5 p-5 rounded-full bg-zinc-100 dark:bg-zinc-800/60">
+              {isDragging ? (
+                <UploadCloud className="w-8 h-8 text-primary animate-bounce" />
+              ) : (
+                <ImageIcon className="w-8 h-8 text-muted-foreground" />
+              )}
+            </div>
 
-      <div className="space-y-1">
-        <p className="text-base text-foreground">
-          {isDragging ? (
-            "Drop image here to verify"
-          ) : (
-            <>
-              Drag and drop an image here, or{" "}
-              <span className="text-primary">browse</span>
-            </>
-          )}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Supports JPG, PNG, WEBP • Max 15MB
-        </p>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-foreground">
+                {isDragging ? (
+                  "Drop image here to verify"
+                ) : (
+                  <>
+                    Drag and drop an image here, or{" "}
+                    <span className="text-foreground underline decoration-1 underline-offset-2">browse</span>
+                  </>
+                )}
+              </p>
+              <p className="text-[10px] font-mono text-muted-foreground tracking-wide">
+                Supports JPG, PNG, WEBP • Max 15MB
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
