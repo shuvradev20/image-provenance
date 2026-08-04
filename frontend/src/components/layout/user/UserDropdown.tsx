@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Copy, CopyCheck, LogOut, UserCircle } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { cn } from '@/lib/utils';
@@ -37,13 +38,26 @@ export function UserDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         title={currentActiveWallet}
         className={cn(
-          "flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-full border border-border bg-background text-foreground",
-          "w-10 h-10 p-0 md:w-auto md:h-10 md:px-3 md:py-1.5",
-          "hover:bg-zinc-200/80 dark:hover:bg-zinc-800",
-          isOpen && "bg-zinc-200/80 dark:bg-zinc-800 border-border"
+          "flex items-center justify-center gap-2 transition-colors cursor-pointer rounded-full text-foreground",
+          "w-10 h-10 p-0 border-0 bg-transparent", 
+          "md:w-auto md:h-10 md:px-3 md:py-1.5 md:border md:border-border md:bg-background",
+          "hover:opacity-80 md:hover:opacity-100 md:hover:bg-zinc-200/80 md:dark:hover:bg-zinc-800",
+          isOpen && "opacity-80 md:opacity-100 md:bg-zinc-200/80 md:dark:bg-zinc-800 md:border-border"
         )}
       >
-        <div className="w-6 h-6 md:w-5 md:h-5 rounded-full bg-linear-to-tr from-[#f58320] via-[#c6307e] to-[#4527a0] shrink-0 shadow-inner" />
+        <div className="w-7 h-7 md:m-0 md:w-6 md:h-6 rounded-full shrink-0 shadow-inner overflow-hidden flex items-center border border-border justify-center bg-zinc-100 dark:bg-zinc-800">
+          {user?.profileImage ? (
+            <Image 
+              src={user.profileImage} 
+              alt="Profile" 
+              width={40} 
+              height={40} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-linear-to-tr from-[#f58320] via-[#c6307e] to-[#4527a0]" />
+          )}
+        </div>
         <span className="text-sm font-mono font-medium tracking-tight text-foreground hidden md:inline-block">
           {formatAddress(currentActiveWallet)}
         </span>

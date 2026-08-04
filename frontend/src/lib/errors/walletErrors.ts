@@ -26,6 +26,5 @@ export const formatWalletError = (error: any): string => {
     return "Please register your account first.";
   }
   
-  // Default Error
   return "Failed to connect to MetaMask. Please try again.";
 };

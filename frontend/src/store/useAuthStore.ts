@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { googleAuthApi, getNonceApi, walletLoginApi, logoutUserApi, linkWalletApi } from "@/lib/api/auth";
 import { getCurrentUserProfileApi } from "@/lib/api/user";
 import { connectToMetaMask, checkAndSwitchNetwork, signWalletLinkMessage, signAuthMessage} from "@/lib/web3";
+import { toast } from 'sonner';
+import { formatWalletError } from '@/lib/errors/walletErrors';
+
 
 interface User {
     _id: string;
@@ -54,8 +57,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     loginWithGoogle: async (googleData) => {
         try {
             const response = await googleAuthApi(googleData);
-            
-            // FIX: response is already ApiResponse, so we access .data.user
             const userData = response.data.user; 
             const savedWallet = userData.walletAddress || null;
 
@@ -149,9 +150,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const currentUser = get().user;
 
         if(!currentUser || !currentUser.email) {
+            const errorMsg = "Please login with Google first.";
             set({
                 walletError: "Please login with Google first."
             });
+            toast.error(errorMsg);
             return;
         }
 
@@ -178,16 +181,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 isConnectingWallet: false,
                 user: {
                     ...currentUser,
-                    // FIX: Corrected path to walletAddress
                     walletAddress: response.data.walletAddress 
                 }
             })
+            toast.success("Wallet linked successfully!");
         } catch (error: any) {
-            console.error("Wallet connection error:", error);
+            const rawError = error.response?.data?.message || error;
+            const errorMessage = formatWalletError(rawError);
+
             set({ 
                 walletError: error.response?.data?.message || error.message || "Failed to link wallet", 
                 isConnectingWallet: false 
             });
+            toast.error(errorMessage);
         }
     },
 

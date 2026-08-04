@@ -11,6 +11,7 @@ import { UserDropdown } from './UserDropdown';
 import { SearchArea } from './SearchArea';
 
 
+
 const formatAddress = (address: string) => {
   if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -49,7 +50,6 @@ export function Topbar() {
       )}>
         <div className="flex items-center gap-3 w-auto md:w-60">
           <button
-            title="Toggle Sidebar"
             onClick={toggleSidebar}
             className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 hover:text-foreground transition-colors cursor-pointer"
             aria-label="Toggle Sidebar"
