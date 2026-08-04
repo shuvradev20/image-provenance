@@ -93,23 +93,22 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   return createPortal(
     <div className="fixed inset-0 z-100 flex items-start sm:items-center justify-center px-4 pt-24 sm:pt-0">
       <div 
-        className="absolute inset-0 bg-white/80 dark:bg-black/90 backdrop-blur-xl transition-all duration-300 animate-in fade-in"
+        className="absolute inset-0 bg-background/80 dark:bg-black/80 backdrop-blur-xl transition-all duration-300 animate-in fade-in"
         onClick={onClose}
       />
 
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-100 rounded-2xl p-8 sm:p-10 bg-white border border-slate-200 shadow-lg
-          dark:bg-zinc-900 dark:border-zinc-800 dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)]"
+        className="relative w-full max-w-100 rounded-xl p-8 sm:p-10 bg-card dark:bg-zinc-900/60 shadow-lg
+          dark:shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)]"
       >
         <button 
           onClick={onClose}
           disabled={isLoading}
-          className="absolute right-5 top-5 z-20 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100
-           dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="absolute right-5 top-5 z-20 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-zinc-200/80
+           dark:hover:bg-zinc-800 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
         </button>
 
         <div className="relative z-10 flex flex-col items-center">
@@ -118,19 +117,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             <ProveNodeLogoDark className="w-12 h-12 hidden dark:block" />
           </div>
 
-          <div className="mb-8 text-center space-y-1">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <div className="mb-8 text-center space-y-1.5">
+            <h2 className="text-xl font-semibold text-foreground tracking-tight">
               Welcome back
             </h2>
-            <p className="text-sm text-slate-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Access your account to continue.
             </p>
           </div>
 
           {authError && (
-            <div className="w-full mb-6 p-4 rounded-xl flex items-start gap-3 
-              bg-red-50 text-red-600 border border-red-100 
-              dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/20 
+            <div className="w-full mb-6 p-4 rounded-md flex items-start gap-3 
+              bg-destructive/10 text-destructive border border-destructive/20 
               animate-in fade-in slide-in-from-top-2 duration-300">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <p className="text-sm font-medium leading-relaxed">
@@ -144,9 +142,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               <button 
                 onClick={() => handleGoogleLogin()}
                 disabled={isAnyLoading}
-                className="group inline-flex items-center justify-center gap-3 rounded-xl py-4 px-4 text-sm font-semibold transition-all duration-200
-                  bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:shadow-md
-                  dark:bg-zinc-900 dark:text-white dark:border-zinc-800 dark:hover:bg-zinc-800
+                className="group inline-flex items-center justify-center gap-3 rounded-md py-3.5 px-4 text-sm font-medium transition-colors duration-150
+                  bg-card text-foreground border border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800
                   disabled:opacity-50 disabled:cursor-wait"
               >
                 <GoogleLogo className="w-5 h-5 shrink-0" />
@@ -154,19 +151,18 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </button>
 
               <div className="relative flex items-center py-1">
-                <div className="grow border-t border-slate-200 dark:border-zinc-800"></div>
-                <span className="mx-3 shrink-0 text-[11px] font-medium text-slate-500 dark:text-zinc-400">
+                <div className="grow border-t border-border"></div>
+                <span className="mx-3 shrink-0 text-[10px] font-mono text-muted-foreground uppercase">
                   OR
                 </span>
-                <div className="grow border-t border-slate-200 dark:border-zinc-800"></div>
+                <div className="grow border-t border-border"></div>
               </div>
 
               <button 
                 onClick={handleMetaMaskLogin}
                 disabled={isAnyLoading}
-                className="group inline-flex items-center justify-center gap-3 rounded-xl py-4 px-4 text-sm font-semibold transition-all duration-200
-                  bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:shadow-md
-                  dark:bg-zinc-900 dark:text-white dark:border-zinc-800 dark:hover:bg-zinc-800
+                className="group inline-flex items-center justify-center gap-3 rounded-md py-3.5 px-4 text-sm font-medium transition-colors duration-150
+                  bg-card text-foreground border border-border hover:bg-zinc-200/80 dark:hover:bg-zinc-800
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <MetaMaskLogo />
@@ -175,12 +171,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
           </div>
           
-          <div className="mt-8 text-center text-[11px] text-slate-500 dark:text-zinc-400 space-y-1.5">
+          <div className="mt-8 text-center text-[10px] text-muted-foreground space-y-1.5">
             <p>
               By continuing, you agree to our{' '}
-              <Link href="/terms" className="font-medium text-slate-700 dark:text-zinc-300">Terms of Service</Link>
+              <Link href="/terms" className="font-medium text-foreground hover:underline transition-all">Terms of Service</Link>
               {' '}and{' '}
-              <Link href="/privacy" className="font-medium text-slate-700 dark:text-zinc-300">Privacy Policy</Link>.
+              <Link href="/privacy" className="font-medium text-foreground hover:underline transition-all">Privacy Policy</Link>.
             </p>
           </div>
         </div>
