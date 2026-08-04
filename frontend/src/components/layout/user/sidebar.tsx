@@ -21,9 +21,16 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
 
+  const isFullyVerified = user?.walletAddress && user?.kycStatus === 'verified';
+
   const menuItems = baseMenuItems.map((item) => {
     if (item.name === 'Showcase') {
-      return { ...item, path: `/dashboard/showcase/${user?.walletAddress || ''}` };
+      return { 
+        ...item, 
+        path: isFullyVerified 
+          ? `/dashboard/showcase/${user.walletAddress}` 
+          : '/dashboard/showcase' 
+      };
     }
     return item;
   });
@@ -37,7 +44,7 @@ export function Sidebar() {
 
   const checkIsActive = (item: typeof baseMenuItems[number]) => {
     if (item.name === 'Explore') return pathname === '/dashboard';
-    if (item.name === 'Showcase') return pathname === item.path;
+    if (item.name === 'Showcase') return pathname.startsWith('/dashboard/showcase');
     return pathname === item.path || pathname.startsWith(`${item.path}/`);
   };
 
