@@ -227,8 +227,10 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
     const provider = new ethers.JsonRpcProvider(config.rpcUrl);
 
     let receipt: ethers.TransactionReceipt | null = null;
+    
     try {
         receipt = await provider.getTransactionReceipt(transactionHash);
+        
 
         if(!receipt) {
             throw new ApiError(404, "Transaction receipt not found on local node. try again");
@@ -285,6 +287,10 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
 
     console.log(`Verifying and saving asset to DB. TxHash: ${transactionHash}`);
 
+    const txFeeInEth = ethers.formatEther(
+        receipt.gasUsed * (receipt.gasPrice ?? 0n)
+    );
+
     const newImage = await Image.create({
         uploader: customReq.user.walletAddress!,
         currentOwner: customReq.user.walletAddress!,
@@ -309,6 +315,7 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
         actor: customReq.user.walletAddress!, 
         targetUser: config.contractAddress,   
         transactionHash: transactionHash,
+        gasUsed: txFeeInEth,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
     });
@@ -579,6 +586,10 @@ const confirmMetadataUpdate = asyncHandler(async (req: Request, res: Response) =
         }
     }
 
+    const txFeeInEth = ethers.formatEther(
+        receipt.gasUsed * (receipt.gasPrice ?? 0n)
+    );
+
     image.metadataCID = newMetadataCID;
     image.transactionHash = transactionHash; 
     image.history.push({
@@ -595,6 +606,7 @@ const confirmMetadataUpdate = asyncHandler(async (req: Request, res: Response) =
         actor: customReq.user.walletAddress!, // User Wallet
         targetUser: config.contractAddress,   // ProveNode Smart Contract Address
         transactionHash: transactionHash,
+        gasUsed: txFeeInEth,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
     });
@@ -681,11 +693,16 @@ export const confirmImageTransfer = asyncHandler(async (req: Request, res: Respo
 
     console.log(`Transfer Verified On-Chain. Updating DB for Hash: ${hash}`);
 
+    const txFeeInEth = ethers.formatEther(
+        receipt.gasUsed * (receipt.gasPrice ?? 0n)
+    );
+    
     image.currentOwner = newOwnerWallet.toLowerCase();
     image.transactionHash = transactionHash; 
     image.history.push({
         action: 'transferred',
         actor: customReq.user.walletAddress!,
+        to: newOwnerWallet.toLowerCase(),
         timestamp: blockTimestamp,
         transactionHash: transactionHash
     });
@@ -697,6 +714,7 @@ export const confirmImageTransfer = asyncHandler(async (req: Request, res: Respo
         actor: customReq.user.walletAddress!,  
         targetUser: newOwnerWallet.toLowerCase(), 
         transactionHash: transactionHash,
+        gasUsed: txFeeInEth,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
     });
@@ -782,6 +800,10 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
 
     console.log(`Burn Verified On-Chain. Updating DB for Hash: ${hash}`);
 
+    const txFeeInEth = ethers.formatEther(
+        receipt.gasUsed * (receipt.gasPrice ?? 0n)
+    );
+
     image.status = 'burned';
     image.currentOwner = "0x0000000000000000000000000000000000000000";
     image.transactionHash = transactionHash; 
@@ -799,6 +821,7 @@ const confirmImageBurn = asyncHandler(async (req: Request, res: Response) => {
         actor: customReq.user.walletAddress!,  // User Wallet
         targetUser: '0x0000000000000000000000000000000000000000', // Null Address
         transactionHash: transactionHash,
+        gasUsed: txFeeInEth,
         blockNumber: receipt.blockNumber,
         blockTimestamp: blockTimestamp
     });
@@ -862,7 +885,6 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
     }).lean();
 
     if (matchedAsset) {
-        console.log("Result: Exact match found! Image is Authentic.");
         return res.status(200).json(
             new ApiResponse(200, {
                 status: "authentic",
@@ -891,7 +913,6 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
                 matchedAsset = await Image.findOne({ watermarkID: paddedWatermarkID }).lean();
 
                 if (matchedAsset) {
-                    console.log("Result: DNA Matched! Image is an Edited version of a registered asset.");
                     return res.status(200).json(
                         new ApiResponse(200, {
                             status: "edited",

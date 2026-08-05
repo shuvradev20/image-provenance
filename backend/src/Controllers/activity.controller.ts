@@ -78,7 +78,8 @@ const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
         tx24hCount,
         totalVerifiedAssets,
         totalRegisteredUsers,
-        chartRawData
+        chartRawData,
+        avgGasResult
     ] = await Promise.all([
         Activity.countDocuments(),
         Activity.countDocuments({ blockTimestamp: { $gte: twentyFourHoursAgo } }),
@@ -99,6 +100,19 @@ const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
                 }
             },
             { $sort: { "_id": 1 } }
+        ]),
+        Activity.aggregate([ // 6 (Ei 6th item ta Promise.all er array-te miss hieyechilo)
+            { 
+                $match: { 
+                    blockTimestamp: { $gte: twentyFourHoursAgo } 
+                } 
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgFee: { $avg: { $toDouble: "$gasUsed" } }
+                }
+            }
         ])
     ]);
 
@@ -107,12 +121,15 @@ const getActivityStats = asyncHandler(async (_req: Request, res: Response) => {
         transactions: item.count
     }));
 
+    const rawAvgEth = avgGasResult.length > 0 && avgGasResult[0]?.avgFee ? avgGasResult[0].avgFee : 0;
+    const avgGasEth = rawAvgEth > 0 ? `${Number(rawAvgEth).toFixed(6)} ETH` : "0.000150 ETH";
+
     const statsData = {
         totalTransactions,
         tx24hCount,
         totalVerifiedAssets,
         totalRegisteredUsers,
-        avgGasEth: "0.00021 ETH", 
+        avgGasEth, 
         activityTrend
     };
 

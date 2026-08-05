@@ -331,10 +331,15 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
 
         const block = await provider.getBlock(receipt.blockNumber);
         const blockTimestamp = block ? new Date(Number(block.timestamp) * 1000) : new Date();
+        
+        const txFeeInEth = ethers.formatEther(
+            receipt.gasUsed * (receipt.gasPrice ?? 0n)
+        );
 
         user.kycStatus = 'verified';
         user.isBlockchainRegistered = true;
         user.kycVerifiedAt = new Date();
+        user.kycTransactionHash = tx.hash;
         await user.save({validateBeforeSave: false});
 
         await Activity.create({
@@ -342,6 +347,7 @@ const approveKyc = asyncHandler(async (req: Request, res: Response) => {
             actor: ownerWallet.address,       
             targetUser: user.walletAddress,   
             transactionHash: tx.hash,
+            gasUsed: txFeeInEth,
             blockNumber: receipt.blockNumber,
             blockTimestamp: blockTimestamp
         });
