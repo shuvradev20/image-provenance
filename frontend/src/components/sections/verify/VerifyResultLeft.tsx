@@ -54,7 +54,7 @@ export default function VerifyResultLeft({ status, file, resultData }: VerifyRes
   const banner = getBannerConfig();
 
   return (
-    <div className="w-full h-full bg-background flex flex-col items-center justify-between gap-4 sm:py-6 sm:px-12">
+    <div className="w-full h-full flex flex-col items-center justify-between gap-4 sm:py-6 sm:px-12">
       {banner && (
         <div className={`w-full py-3 px-6 rounded-xl border flex items-center gap-3 shrink-0 ${banner.color}`}>
           <div className="shrink-0">{banner.icon}</div>

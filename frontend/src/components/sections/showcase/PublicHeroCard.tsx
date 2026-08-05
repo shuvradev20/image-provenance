@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, ShieldAlert, Clock, Copy, CopyCheck, MapPin, Wallet  } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Clock, Copy, CopyCheck, MapPin, Wallet, Globe  } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { XIcon, FacebookIcon, InstagramIcon, GlobeIcon } from "@/components/icons/publicHeroCardLogo";
+import { FaXTwitter, FaFacebook, FaInstagram } from "react-icons/fa6";
 
 export interface PublicProfileProps {
   fullName?: string;
@@ -146,10 +146,15 @@ export function PublicHeroCard({fullName = "Unnamed Creator", bio, location, kyc
                     rel="noopener noreferrer" 
                     className="p-1.5 rounded-md hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
                   >
-                    {platform === 'x' || platform === 'twitter' ? <XIcon className="w-3.5 h-3.5" /> :
-                     platform === 'facebook' ? <FacebookIcon className="w-3.5 h-3.5"/> :
-                     platform === 'instagram' ? <InstagramIcon className="w-3.5 h-3.5"/> :
-                     <GlobeIcon className="w-4 h-4"/>}
+                    {platform === 'x' || platform === 'twitter' ? (
+                      <FaXTwitter className="w-3.5 h-3.5 text-foreground" />
+                    ) : platform === 'facebook' ? (
+                      <FaFacebook className="w-3.5 h-3.5 text-blue-600" />
+                    ) : platform === 'instagram' ? (
+                      <FaInstagram className="w-3.5 h-3.5 text-pink-500" />
+                    ) : (
+                      <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+                    )}
                   </a>
                 );
               })}

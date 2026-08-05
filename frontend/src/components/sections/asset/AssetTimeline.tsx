@@ -40,7 +40,10 @@ export default function AssetTimeline({ history }: AssetTimelineProps) {
   };
 
   const renderEventDetails = (event: any, index: number) => {
-    const wallet = event.actor || "0x0000000000000000000000000000000000000000";
+    const wallet =
+      event.action === "transferred"
+        ? event.to
+        : event.actor || "0x0000000000000000000000000000000000000000";
 
     let actionText = "";
     switch (event.action) {

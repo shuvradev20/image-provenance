@@ -5,6 +5,7 @@ import mongoose, { Schema, type Document } from "mongoose";
 export interface IHistory {
     action: 'minted' | 'metadata_updated' | 'transferred' | 'burned';
     actor: string;
+    to?: string;
     timestamp: Date;
     transactionHash: string
 }
@@ -128,6 +129,11 @@ const imageSchema = new Schema<IImage>({
         actor: { 
             type: String, 
             required: true 
+        },
+        to: { 
+            type: String,
+            trim: true,
+            lowercase: true
         },
         timestamp: { 
             type: Date, 
