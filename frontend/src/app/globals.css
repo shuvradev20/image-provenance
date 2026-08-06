@@ -148,3 +148,22 @@
     @apply font-sans;
   }
 }
+
+/* Chrome & Edge Autofill Ash Background Fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--foreground) !important;
+  /* Light mode-e exact ash color */
+  -webkit-box-shadow: 0 0 0px 1000px #e4e4e7 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Dark mode-e exact dark ash color */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #27272a inset !important;
+}
