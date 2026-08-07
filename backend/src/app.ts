@@ -1,6 +1,7 @@
 import express, { type Application, type ErrorRequestHandler } from 'express';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import config from './config/config.js';
 
 const app: Application = express()
 
@@ -16,9 +17,10 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 };
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: config.corsOrigin,
     credentials: true
 }));
+
 app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded({ extended: true, limit: "16kb"}));
 app.use(express.static("public"));

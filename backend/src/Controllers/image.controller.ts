@@ -90,15 +90,15 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
     });
 
     try {
-        const extractResponse = await axios.post('http://127.0.0.1:8000/extract-watermark', extractionForm, {
+        const extractResponse = await axios.post(`${config.watermarkEngineUrl}/extract-watermark`, extractionForm, {
             headers: { ...extractionForm.getHeaders() }
         });
 
         if (extractResponse.data && extractResponse.data.status === "found" && extractResponse.data.watermark_id) {
             const foundCoreDNA = extractResponse.data.watermark_id; 
             if (!/^0+$/.test(foundCoreDNA)) {
-                const paddedWatermarkID = foundCoreDNA.padEnd(64, '0');
-                const existedAsset = await Image.findOne({ watermarkID: paddedWatermarkID }).lean();
+                const formattedWatermarkID = foundCoreDNA.startsWith('0x') ? foundCoreDNA : `0x${foundCoreDNA}`;
+                const existedAsset = await Image.findOne({ watermarkID: formattedWatermarkID }).lean();
 
                 if (existedAsset) {
                     throw new ApiError(409, `Copyright Violation: Image contains DNA of an existing ProveNode asset.`);
@@ -111,8 +111,8 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
     }
 
     const parsedTags = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()) : [];
-    const coreWatermarkID = crypto.randomBytes(4).toString('hex'); 
-    const watermarkID = coreWatermarkID.padEnd(64, '0');
+    const coreWatermarkID = crypto.randomBytes(4).toString('hex');
+    const watermarkID = `0x${coreWatermarkID}`;
     const embedForm = new FormData();
 
     embedForm.append('image', req.file.buffer, {
@@ -124,7 +124,7 @@ const uploadAndGenerateProvenance = asyncHandler(async (req: Request, res: Respo
     let watermarkedImageBuffer: Buffer;
     try {
         console.log("Injecting DNA via Python Microservice...");
-        const pythonResponse = await axios.post('http://127.0.0.1:8000/embed-watermark', embedForm, {
+        const pythonResponse = await axios.post(`${config.watermarkEngineUrl}/embed-watermark`, embedForm, {
             headers: { ...embedForm.getHeaders()},
             responseType: "arraybuffer" 
         });
@@ -251,12 +251,12 @@ const confirmAndRegisterImage = asyncHandler(async (req: Request, res: Response)
             throw new ApiError(400, "Transaction was sent to a different contract.");
         }
 
-        const contractABI = ["event ImageRegistered(address indexed creator, bytes32 indexed hash, bytes32 watermarkID, string metadataCID)"];
+        const contractABI = ["event ImageRegistered(address indexed creator, bytes32 indexed hash, bytes4 watermarkID, string metadataCID)"];
         const iface = new ethers.Interface(contractABI);
 
         let isDataAuthentic = false;
 
-    const formattedLocalWatermark = ethers.zeroPadValue("0x" + watermarkID, 32).toLowerCase();
+    const formattedLocalWatermark = (watermarkID.startsWith("0x") ? watermarkID : `0x${watermarkID}`).toLowerCase();
     const formattedLocalHash = imageHash.toLowerCase();
 
     for (const log of receipt.logs) {
@@ -900,7 +900,7 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
     });
 
     try {
-        const extractResponse = await axios.post('http://127.0.0.1:8000/extract-watermark', extractionForm, {
+        const extractResponse = await axios.post(`${config.watermarkEngineUrl}/extract-watermark`, extractionForm, {
             headers: { ...extractionForm.getHeaders() }
         });
 
@@ -908,9 +908,9 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
             const foundCoreDNA = extractResponse.data.watermark_id; 
 
             if (!/^0+$/.test(foundCoreDNA)) {
-                const paddedWatermarkID = foundCoreDNA.padEnd(64, '0');
+                const formattedWatermarkID = foundCoreDNA.startsWith('0x') ? foundCoreDNA : `0x${foundCoreDNA}`;
                 
-                matchedAsset = await Image.findOne({ watermarkID: paddedWatermarkID }).lean();
+                matchedAsset = await Image.findOne({ watermarkID: formattedWatermarkID }).lean();
 
                 if (matchedAsset) {
                     return res.status(200).json(

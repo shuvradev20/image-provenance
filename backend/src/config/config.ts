@@ -1,4 +1,11 @@
 const config = {
+    // server & network
+    port: process.env.PORT || 8000,
+    corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
+
+    // python microservice
+    watermarkEngineUrl: process.env.WATERMARK_ENGINE || "http://127.0.0.1:8000",
+
     //token
     accessTokenSecret: process.env.ACCESS_TOKEN_SECRET || "fallback_secret_key",
     accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || "1d",
