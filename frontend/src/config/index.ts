@@ -11,7 +11,8 @@ export const networks: [AppKitNetwork, ...AppKitNetwork[]] = [arbitrumSepolia]
 
 export const wagmiAdapter = new WagmiAdapter({
   projectId,
-  networks
+  networks,
+  connectors: [],
 })
 
 export const config = wagmiAdapter.wagmiConfig

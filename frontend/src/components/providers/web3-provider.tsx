@@ -16,8 +16,11 @@ createAppKit({
   projectId,
   networks,
   features: {
-    analytics: false
-  }
+    analytics: false,
+    email: false,
+    socials: false,
+  },
+  allWallets: 'HIDE', 
 })
 
 function AppKitThemeSync() {
