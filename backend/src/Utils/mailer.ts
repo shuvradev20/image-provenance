@@ -20,7 +20,7 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 420px; margin: 20px auto; padding: 32px 24px; border: 1px solid #f3f4f6; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);">
             
             <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://res.cloudinary.com/doorp4zdu/image/upload/v1784609476/proveNode_logo_kjnuzj.png" alt="ProveNode" width="44" style="display: block; margin: 0 auto;" />
+                <img src="https://res.cloudinary.com/di1g3vufg/image/upload/v1786105999/provenode_logo_aet8az.png" alt="ProveNode" width="44" style="display: block; margin: 0 auto;" />
             </div>
             <h2 style="color: #09090b; font-size: 18px; font-weight: 600; text-align: center; margin-bottom: 24px; margin-top: 0; letter-spacing: -0.3px;">Welcome to ProveNode</h2>
             <p style="color: #09090b; font-size: 15px; font-weight: 600; margin-bottom: 12px;">Hi ${userName},</p>
