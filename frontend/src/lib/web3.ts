@@ -1,99 +1,69 @@
-import { ethers } from 'ethers';
+import { ethers, BrowserProvider, JsonRpcSigner } from 'ethers';
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from './contract';
+import { getConnection, signMessage, switchChain, getConnectorClient } from '@wagmi/core';
+import { config } from '@/config';
+import { arbitrumSepolia } from '@reown/appkit/networks';
+import type { Client, Chain, Transport } from 'viem';
 
-declare global {
-    interface Window {
-        ethereum?: any;
-    }
+
+export function clientToProvider(client: Client<Transport, Chain>) {
+    const { chain, transport } = client;
+    const network = {
+        chainId: chain.id,
+        name: chain.name,
+        ensAddress: chain.contracts?.ensRegistry?.address
+    };
+    return new BrowserProvider(transport, network);
 }
 
-const TARGET_CHAIN_ID = 421614; 
-const TARGET_CHAIN_HEX = '0x66eee';
-
-export const getProvider = () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
-        throw new Error("Please install MetaMask to continue.");
-    }
-    return new ethers.BrowserProvider(window.ethereum);
-};
+export async function getEthersSigner() {
+    const client = await getConnectorClient(config);
+    const provider = clientToProvider(client);
+    const signer = new JsonRpcSigner(provider, client.account.address);
+    return signer;
+}
 
 export const connectToMetaMask = async (): Promise<string> => {
-    const provider = getProvider();
-    const signer = await provider.getSigner();
-    return await signer.getAddress();
+    const connection = getConnection(config);
+    if (!connection.address) {
+        throw new Error("Please connect your wallet using the AppKit button first.");
+    }
+    return connection.address.toLowerCase();
 };
 
 export const checkAndSwitchNetwork = async (): Promise<void> => {
-    const provider = getProvider();
-    const network = await provider.getNetwork();
-
-    if (network.chainId !== BigInt(TARGET_CHAIN_ID)) {
-        try {
-            await provider.send('wallet_switchEthereumChain', [{ chainId: TARGET_CHAIN_HEX }]);
-        } catch (switchError: any) {
-            if (switchError.error?.code === 4902 || switchError.code === 4902 || switchError.info?.error?.code === 4902) {
-                try {
-                    console.log("Network not found. Adding Arbitrum Sepolia network...");
-                    await provider.send('wallet_addEthereumChain', [
-                        {
-                            chainId: TARGET_CHAIN_HEX,
-                            chainName: 'Arbitrum Sepolia',
-                            rpcUrls: ['https://arb-sepolia.g.alchemy.com/v2/sj-52VH4t7BiJfY8VA4gi'], 
-                            nativeCurrency: {
-                                name: 'Ethereum',
-                                symbol: 'ETH',
-                                decimals: 18,
-                            },
-                            blockExplorerUrls: ['https://sepolia.arbiscan.io/'] 
-                        },
-                    ]);
-                } catch (addError) {
-                    console.error("Failed to add network", addError);
-                    throw new Error("Failed to add Arbitrum Sepolia network. Please add it manually.");
-                }
-            } else {
-                console.error("Network switch failed", switchError);
-                throw new Error("Please switch to the Arbitrum Sepolia network in your wallet.");
-            }
-        }
+    const connection = getConnection(config);
+    if (connection.chainId !== arbitrumSepolia.id) {
+        await switchChain(config, { chainId: arbitrumSepolia.id });
     }
 };
 
 export const signWalletLinkMessage = async (email: string, timestamp: number): Promise<string> => {
-    const provider = getProvider();
-    const signer = await provider.getSigner();
     const message = `Link wallet to ProveNode account: ${email} | Time: ${timestamp}`;
-    return await signer.signMessage(message);
+    return await signMessage(config, { message });
 };
 
 export const signAuthMessage = async (nonce: string): Promise<string> => {
-    const provider = getProvider();
-    const signer = await provider.getSigner();
-    return await signer.signMessage(nonce);
+    return await signMessage(config, { message: nonce });
 };
 
 export const getProveNodeContract = async () => {
-    const provider = getProvider();
-    const signer = await provider.getSigner();
+    const signer = await getEthersSigner();
     return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 };
 
 export const signImageMintPayload = async (imageHash: string, watermarkIDRaw: string): Promise<string> => {
-    const provider = getProvider();
-    const signer = await provider.getSigner();
-    const formattedWatermarkID = ethers.zeroPadValue("0x" + watermarkIDRaw.replace("0x", ""), 32);
+    const formattedWatermarkID = ethers.zeroPadValue("0x" + watermarkIDRaw.replace("0x", ""), 4);
 
     const messageHash = ethers.solidityPackedKeccak256(
-        ["bytes32", "bytes32"],
+        ["bytes32", "bytes4"],
         [imageHash, formattedWatermarkID]
     );
 
-    const signature = await signer.signMessage(ethers.getBytes(messageHash));
-
-    return signature;
+    return await signMessage(config, { message: { raw: ethers.getBytes(messageHash) } });
 };
 
-const getOptimizedGasOverrides = async (provider: ethers.BrowserProvider) => {
+const getOptimizedGasOverrides = async (provider: BrowserProvider) => {
     try {
         const feeData = await provider.getFeeData();
         if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
@@ -103,7 +73,7 @@ const getOptimizedGasOverrides = async (provider: ethers.BrowserProvider) => {
             };
         }
     } catch (feeError) {
-        console.warn("Dynamic gas estimation lagged, using MetaMask defaults:", feeError);
+        console.warn("Dynamic gas estimation lagged, using defaults:", feeError);
     }
     return {};
 };
@@ -117,11 +87,10 @@ export const mintImageOnChain = async (
     await checkAndSwitchNetwork();
 
     const contract = await getProveNodeContract();
-    const provider = getProvider();
-    const formattedWatermarkID = ethers.zeroPadValue("0x" + watermarkIDRaw.replace("0x", ""), 32);
-    const gasOverrides = await getOptimizedGasOverrides(provider);
+    const signer = await getEthersSigner();
+    const formattedWatermarkID = ethers.zeroPadValue("0x" + watermarkIDRaw.replace("0x", ""), 4);
+    const gasOverrides = await getOptimizedGasOverrides(signer.provider as BrowserProvider);
 
-    console.log("Sending transaction to blockchain with optimized gas overrides...");
     const tx = await contract.registerImage(
         imageHash,
         formattedWatermarkID,
@@ -130,7 +99,6 @@ export const mintImageOnChain = async (
         gasOverrides
     );
 
-    console.log("Transaction sent! Hash:", tx.hash);
     const receipt = await tx.wait();
     
     if (receipt.status === 1) return tx.hash;
@@ -144,17 +112,15 @@ export const updateMetadataOnChain = async (
     await checkAndSwitchNetwork(); 
     
     const contract = await getProveNodeContract();
-    const provider = getProvider();
-    const gasOverrides = await getOptimizedGasOverrides(provider);
+    const signer = await getEthersSigner();
+    const gasOverrides = await getOptimizedGasOverrides(signer.provider as BrowserProvider);
 
-    console.log("Sending metadata update transaction with optimized gas...");
     const tx = await contract.updateMetadata(
         imageHash,
         newMetadataCID,
         gasOverrides
     );
 
-    console.log("Transaction sent! Hash:", tx.hash);
     const receipt = await tx.wait();
     
     if (receipt.status === 1) return tx.hash;
@@ -167,10 +133,9 @@ export const transferImageOnChain = async (
 ): Promise<string> => {
     await checkAndSwitchNetwork();
     const contract = await getProveNodeContract();
-    const provider = getProvider();
-    const gasOverrides = await getOptimizedGasOverrides(provider);
+    const signer = await getEthersSigner();
+    const gasOverrides = await getOptimizedGasOverrides(signer.provider as BrowserProvider);
 
-    console.log("Sending Transfer transaction...");
     const tx = await contract.transferImage(imageHash, newOwnerWallet, gasOverrides);
     const receipt = await tx.wait();
     
@@ -181,10 +146,9 @@ export const transferImageOnChain = async (
 export const burnImageOnChain = async (imageHash: string): Promise<string> => {
     await checkAndSwitchNetwork();
     const contract = await getProveNodeContract();
-    const provider = getProvider();
-    const gasOverrides = await getOptimizedGasOverrides(provider);
+    const signer = await getEthersSigner();
+    const gasOverrides = await getOptimizedGasOverrides(signer.provider as BrowserProvider);
 
-    console.log("Sending Burn transaction...");
     const tx = await contract.burnImage(imageHash, gasOverrides);
     const receipt = await tx.wait();
     

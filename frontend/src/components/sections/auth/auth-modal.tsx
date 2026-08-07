@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { formatWalletError } from '@/lib/errors/walletErrors';
 import { MetaMaskLogo, GoogleLogo } from '@/components/icons/AuthIcons';
 import { ProveNodeLogoLight, ProveNodeLogoDark } from '@/components/icons/ProveNodeLogo'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+
 
 
 interface AuthModalProps {
@@ -25,6 +27,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const loginWithWallet = useAuthStore((state) => state.loginWithWallet);
   const isConnectingWallet = useAuthStore((state) => state.isConnectingWallet);
   const router = useRouter();
+  const { open } = useAppKit();
+  const { isConnected } = useAppKitAccount();
   
   useEffect(() => {
     setMounted(true);
@@ -72,6 +76,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const handleMetaMaskLogin = async () => {
     setAuthError(null);
     try {
+      if (!isConnected) {
+        await open();
+        return;
+      }
+
       await loginWithWallet();
       const isAuthenticated = useAuthStore.getState().isAuthenticated;
       const walletError = useAuthStore.getState().walletError;
@@ -166,7 +175,11 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <MetaMaskLogo />
-                {isConnectingWallet ? "Connecting Wallet..." : "Continue with MetaMask"}
+                {isConnectingWallet 
+                  ? "Signing Nonce..." 
+                  : isConnected 
+                    ? "Sign In with Wallet" 
+                    : "Connect Wallet"}
               </button>
             </div>
           </div>

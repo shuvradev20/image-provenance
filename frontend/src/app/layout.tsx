@@ -3,6 +3,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { Inter, Geist_Mono } from "next/font/google";
 import { GoogleOAuthProvider } from "@react-oauth/google"; 
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { Web3Provider } from "@/components/providers/web3-provider";
+import AuthInitializer from "@/components/providers/AuthInitializer";
 import "./globals.css";
 
 const inter = Inter({
@@ -40,9 +42,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-            {children}
-          </GoogleOAuthProvider>
+          <Web3Provider>
+            <AuthInitializer />
+            <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+              {children}
+            </GoogleOAuthProvider>
+          </Web3Provider>
         </ThemeProvider>
         <Toaster position="bottom-right" richColors />
       </body>

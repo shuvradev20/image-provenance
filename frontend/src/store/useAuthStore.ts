@@ -4,6 +4,9 @@ import { getCurrentUserProfileApi } from "@/lib/api/user";
 import { connectToMetaMask, checkAndSwitchNetwork, signWalletLinkMessage, signAuthMessage} from "@/lib/web3";
 import { toast } from 'sonner';
 import { formatWalletError } from '@/lib/errors/walletErrors';
+import { watchConnection } from '@wagmi/core';
+import { config } from '@/config';
+
 
 
 interface User {
@@ -210,20 +213,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     listenToWalletChanges: () => {
-        if(typeof window !== 'undefined' && (window as any).ethereum) {
-            const eth = (window as any).ethereum;
-
-            eth.on('accountsChanged', (accounts: string[]) => {
-                if(accounts.length > 0) {
-                    set({currentActiveWallet: accounts[0].toLowerCase()});
+        watchConnection(config, {
+            onChange(connection) {
+                if (connection.address) {
+                    set({ currentActiveWallet: connection.address.toLowerCase() });
                 } else {
-                    set({currentActiveWallet: null})
+                    set({ currentActiveWallet: null });
                 }
-            });
-
-            eth.on('chainChanged', () => {
-                window.location.reload();
-            })
-        }
+            },
+        });
     }
 }));

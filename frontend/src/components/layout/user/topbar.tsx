@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { ProveNodeLogoLight, ProveNodeLogoDark } from '@/components/icons/ProveNodeLogo';
 import { UserDropdown } from './UserDropdown';
 import { SearchArea } from './SearchArea';
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 
 
 
@@ -20,12 +21,18 @@ const formatAddress = (address: string) => {
 export function Topbar() {
   const { toggleSidebar } = useUIStore();
   const { user, isAuthenticated, currentActiveWallet, isConnectingWallet, linkWalletBackend, listenToWalletChanges } = useAuthStore();
+  const { open } = useAppKit();
+  const { isConnected } = useAppKitAccount();
   const isWalletMismatch = isAuthenticated && user?.walletAddress && currentActiveWallet && user.walletAddress.toLowerCase() !== currentActiveWallet.toLowerCase();
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
-  useEffect(() => {
-    listenToWalletChanges();
-  }, [listenToWalletChanges]);
+  const handleConnectWallet = async () => {
+    if (!isConnected) {
+      await open();
+      return;
+    }
+    await linkWalletBackend();
+  };
 
   return (
     <>
@@ -80,7 +87,7 @@ export function Topbar() {
           ) : (
             <button
               title={isConnectingWallet ? "Connecting to wallet..." : "Connect your Web3 wallet"}
-              onClick={linkWalletBackend}
+              onClick={handleConnectWallet}
               disabled={isConnectingWallet}
               className={cn(
                 "flex items-center justify-center gap-2 rounded-xl transition-all font-medium text-sm cursor-pointer",

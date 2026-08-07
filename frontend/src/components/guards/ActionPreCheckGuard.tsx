@@ -4,9 +4,20 @@ import { AlertCircle, ShieldAlert, Wallet, Loader2, CheckCircle2, ChevronRight, 
 import Link from "next/link";
 import { useAuthStore } from "@/store/useAuthStore";
 import { formatWalletError } from "@/lib/errors/walletErrors";
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 
 export default function ActionPreCheckGuard({ children }: { children: React.ReactNode }) {
     const { user, linkWalletBackend, isConnectingWallet, walletError, isLoading } = useAuthStore(); 
+    const { open } = useAppKit();
+    const { isConnected } = useAppKitAccount();
+
+    const handleConnectWallet = async () => {
+        if (!isConnected) {
+            await open();
+            return;
+        }
+        await linkWalletBackend();
+    };
 
     if (isLoading) {
         return (
@@ -53,7 +64,7 @@ export default function ActionPreCheckGuard({ children }: { children: React.Reac
                                     
                                     {!isWalletConnected ? (
                                         <button 
-                                            onClick={linkWalletBackend}
+                                            onClick={handleConnectWallet}
                                             disabled={isConnectingWallet}
                                             className="flex items-center justify-center cursor-pointer gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl font-medium transition-transform active:scale-95 disabled:opacity-80 w-full sm:w-auto"
                                         >
