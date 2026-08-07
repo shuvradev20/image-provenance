@@ -67,6 +67,8 @@ export const useAdminStore = create<AdminAuthState>()(
 
           if (accessToken && typeof window !== 'undefined') {
             localStorage.setItem('adminAccessToken', accessToken);
+            
+            document.cookie = `adminAccessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax; Secure`;
           }
 
           set({
@@ -105,6 +107,8 @@ export const useAdminStore = create<AdminAuthState>()(
 
           if (typeof window !== 'undefined') {
             localStorage.removeItem('adminAccessToken');
+            
+            document.cookie = 'adminAccessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
           }
           
           set({ admin: null, isAuthenticated: false });

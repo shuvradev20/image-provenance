@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (path === '/admin/login' && adminToken) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    return NextResponse.redirect(new URL('/admin/overview', request.url));
   }
 
   return NextResponse.next();
