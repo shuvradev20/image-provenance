@@ -6,28 +6,49 @@ const api = axios.create({
     withCredentials: true
 })
 
+api.interceptors.request.use(
+    (config) => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
     (response) => {
-        return response
+        return response;
     },
-    async(error) => {
+    async (error) => {
         const originalRequest = error.config;
 
-        if(error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {
-                await axios.post(
+                const refreshResponse = await axios.post(
                     `${BASE_URL}/auth/sessions/refresh`,
                     {},
                     { withCredentials: true }
                 );
 
-                return api(originalRequest)
+                const newAccessToken = refreshResponse.data?.data?.accessToken;
+
+                if (newAccessToken && typeof window !== 'undefined') {
+                    localStorage.setItem('accessToken', newAccessToken);
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                }
+
+                return api(originalRequest);
             } catch (refreshError) {
                 console.error("Session expired. Please log in again.");
 
                 if (typeof window !== 'undefined') {
+                    localStorage.removeItem('accessToken'); 
                     window.location.href = '/'; 
                 }
             }

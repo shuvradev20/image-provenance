@@ -57,7 +57,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     loginWithGoogle: async (googleData) => {
         try {
             const response = await googleAuthApi(googleData);
-            const userData = response.data.user; 
+
+            const { user: userData, accessToken } = response.data; 
+            if (accessToken && typeof window !== 'undefined') {
+                localStorage.setItem('accessToken', accessToken);
+            }
+
             const savedWallet = userData.walletAddress || null;
 
             set({ 
@@ -92,8 +97,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 signature: signature
             });
 
-            // FIX: Corrected path to user
-            const userData = loginResponse.data.user;
+            const { user: userData, accessToken } = loginResponse.data;
+            if (accessToken && typeof window !== 'undefined') {
+                localStorage.setItem('accessToken', accessToken);
+            }
 
             set({
                 user: userData,
@@ -132,6 +139,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     logout: async () => {
         try {
             await logoutUserApi();
+
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('accessToken');
+            }
+            
             set({ 
                 user: null, 
                 isAuthenticated: false, 

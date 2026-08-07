@@ -61,7 +61,13 @@ export const useAdminStore = create<AdminAuthState>()(
 
         try {
           const response = await loginAdminApi(credentials); 
-          const adminData = response.data?.admin || response.data;
+          const responseData = response.data?.data || response.data;
+          const adminData = responseData?.admin || responseData;
+          const accessToken = responseData?.accessToken;
+
+          if (accessToken && typeof window !== 'undefined') {
+            localStorage.setItem('adminAccessToken', accessToken);
+          }
 
           set({
             admin: adminData,
@@ -95,6 +101,11 @@ export const useAdminStore = create<AdminAuthState>()(
       logoutAdmin: async () => {
         try {
           await logoutAdminApi(); 
+
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('adminAccessToken');
+          }
+          
           set({ admin: null, isAuthenticated: false });
 
           if (typeof window !== 'undefined') {

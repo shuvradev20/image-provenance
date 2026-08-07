@@ -6,6 +6,19 @@ const adminApi = axios.create({
     withCredentials: true
 });
 
+adminApi.interceptors.request.use(
+    (config) => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('adminAccessToken');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 adminApi.interceptors.response.use(
     (response) => {
         return response;
@@ -18,17 +31,25 @@ adminApi.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                await axios.post(
+                const refreshResponse = await axios.post(
                     `${BASE_URL}/admin/sessions/refresh`,
                     {},
                     { withCredentials: true }
                 );
+
+                const newAccessToken = refreshResponse.data?.data?.accessToken || refreshResponse.data?.accessToken;
+
+                if (newAccessToken && typeof window !== 'undefined') {
+                    localStorage.setItem('adminAccessToken', newAccessToken);
+                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                }
 
                 return adminApi(originalRequest);
             } catch (refreshError) {
                 console.error("Admin session expired. Please log in again.");
 
                 if (typeof window !== 'undefined') {
+                    localStorage.removeItem('adminAccessToken'); 
                     window.location.href = '/admin/login'; 
                 }
             }
@@ -37,5 +58,4 @@ adminApi.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 export default adminApi;
