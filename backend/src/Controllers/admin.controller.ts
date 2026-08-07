@@ -31,10 +31,19 @@ interface IKycAction {
     reason?: string;
 }
 
-const cookieOptions = {
+const isProduction = process.env.NODE_ENV === 'production';
+
+const cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: 'none' | 'lax';
+    path: string;
+} = {
     httpOnly: true,
-    secure: true,
-}
+    secure: isProduction, 
+    sameSite: isProduction ? 'none' : 'lax', 
+    path: '/',
+};
 
 const contractAddress = config.contractAddress;
 const rpcUrl = config.rpcUrl;

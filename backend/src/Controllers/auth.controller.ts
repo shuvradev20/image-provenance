@@ -58,10 +58,19 @@ const generateAccessTokenAndRefreshTokens = async (userId: any) => {
     }
 }
 
-const cookieOptions = {
+const isProduction = process.env.NODE_ENV === 'production';
+
+const cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: 'none' | 'lax';
+    path: string;
+} = {
     httpOnly: true,
-    secure: true,
-}
+    secure: isProduction, 
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+};
 
 /**
  * @route POST /api/v1/auth/sessions/google

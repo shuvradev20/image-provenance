@@ -15,7 +15,8 @@ export interface AdminRequest extends Request {
  * @description Verifies if the request is coming from a logged-in Admin/SuperAdmin.
  */
 export const verifyAdmin = asyncHandler(async (req: AdminRequest, res: Response, next: NextFunction) => {
-    const token = req.cookies?.adminAccessToken || req.header("Authorization")?.replace("Bearer ", "");
+    const authHeader = req.header("Authorization");
+    const token = req.cookies?.adminAccessToken || (authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : null);
 
     if (!token) {
         throw new ApiError(401, "Unauthorized request. No admin token found.");

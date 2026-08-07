@@ -5,6 +5,8 @@ import config from './config/config.js';
 
 const app: Application = express()
 
+app.set('trust proxy', 1);
+
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     const statusCode = err.statusCode || 500;
     const message = err.message || "Internal Server Error";

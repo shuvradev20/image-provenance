@@ -24,7 +24,8 @@ export const verifyJWT = asyncHandler(async (req: CustomRequest, res: Response, 
     try {
 
         // The space after "Bearer " is crucial to avoid parsing errors
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer", "");
+        const authHeader = req.header("Authorization");
+        const token = req.cookies?.accessToken || (authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "").trim() : null);
 
         if (!token) {
             throw new ApiError(401, "Unauthorized request: No token found");
