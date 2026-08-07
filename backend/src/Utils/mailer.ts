@@ -7,7 +7,8 @@ const transporter = nodemailer.createTransport({
     user: config.email, 
     pass: config.password, 
   },
-});
+  family: 4, // Render IPv6 issue fix
+} as nodemailer.TransportOptions);
 
 export const sendWelcomeEmail = async (userEmail: string, userName: string) => {
   try {
