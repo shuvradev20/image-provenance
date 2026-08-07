@@ -7,7 +7,8 @@ export interface IUserBasic {
     email: string;
     walletAddress: string;
     kycSubmittedAt?: string;
-    kycVerifiedAt?: string
+    kycVerifiedAt?: string,
+    kycTransactionHash?: string;
 }
 
 export interface IUserDetails {
@@ -19,6 +20,7 @@ export interface IUserDetails {
     govIdImageUrl?: string;
     selfieWithGovIdUrl?: string;
     kycSubmittedAt?: string;
+    kycTransactionHash?: string;
 }
 
 interface KycState {

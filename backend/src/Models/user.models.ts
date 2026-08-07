@@ -29,6 +29,7 @@ export interface IUser extends Document {
     kycSubmittedAt?: Date | null | undefined;
     kycVerifiedAt?: Date | null | undefined;
     isBlockchainRegistered: boolean; // Becomes true after admin calls Smart Contract
+    kycTransactionHash?: string | undefined;
     refreshToken?: string | undefined;
     generateAccessToken(): string;
     generateRefreshToken(): string;
@@ -112,6 +113,9 @@ const userSchema = new Schema<IUser>({
     isBlockchainRegistered: { 
         type: Boolean, 
         default: false 
+    },
+    kycTransactionHash: { 
+        type: String
     },
     refreshToken: {
         type: String

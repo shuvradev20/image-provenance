@@ -1,154 +1,198 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { useAdminStore } from "@/store/useAdminStore";
+import { toast } from "sonner";
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Loader2, Eye, EyeOff, AlertCircle, X } from "lucide-react";
+
+const createAdminSchema = z.object({
+  fullName: z.string().min(1, { message: "Full Name is required" }),
+  email: z
+    .string()
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid email address" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
+});
+
+type CreateAdminFormValues = z.infer<typeof createAdminSchema>;
 
 export function CreateAdminModal() {
-    const { isCreateModalOpen, setCreateModalOpen, createNewAdmin } = useAdminStore();
-    
-    const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        password: ""
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+  const { isCreateModalOpen, setCreateModalOpen, createNewAdmin } = useAdminStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  const form = useForm<CreateAdminFormValues>({
+    resolver: zodResolver(createAdminSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+    },
+  });
 
-    const handleClose = (open: boolean) => {
-        if (!open && !isSubmitting) {
-            setCreateModalOpen(false);
-            setTimeout(() => {
-                setFormData({ fullName: "", email: "", password: "" });
-                setShowPassword(false);
-            }, 300);
-        }
-    };
+  const handleClose = () => {
+    if (isLoading) return;
+    setCreateModalOpen(false);
+    setTimeout(() => {
+      form.reset();
+      setShowPassword(false);
+      setSubmitError(null);
+    }, 200);
+  };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!formData.fullName || !formData.email || !formData.password) {
-            toast.error("Please fill in all fields.");
-            return;
-        }
+  const onSubmit = async (data: CreateAdminFormValues) => {
+    setSubmitError(null);
+    try {
+      setIsLoading(true);
+      await createNewAdmin(data);
+      toast.success("Administrator created successfully!");
+      handleClose();
+    } catch (error: unknown) {
+      const errMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Failed to create admin. Please try again.";
+      setSubmitError(errMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        setIsSubmitting(true);
-        const toastId = toast.loading("Creating new admin account...");
+  return (
+    <Dialog open={isCreateModalOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent 
+        showCloseButton={false} 
+        className="w-[92vw] sm:max-w-md rounded-xl p-8 sm:p-10 bg-card shadow-xl outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 gap-0"
+      >
+        <button
+          type="button"
+          onClick={handleClose}
+          title="Close"
+          className="absolute right-5 top-5 z-20 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-zinc-200/80 dark:hover:bg-zinc-800 transition-colors duration-150 cursor-pointer"
+        >
+          <X className="h-4 w-4" />
+        </button>
 
-        try {
-            await createNewAdmin(formData);
-            toast.success("Admin created successfully!", { id: toastId });
-            setCreateModalOpen(false);
-            setFormData({ fullName: "", email: "", password: "" });
-            setShowPassword(false);
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to create admin", { id: toastId });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+        <DialogHeader className="mb-6 text-center space-y-1.5 p-0">
+          <DialogTitle className="text-xl font-semibold text-foreground tracking-tight">
+            Add New Admin
+          </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
+            Create a new administrator account.
+          </DialogDescription>
+        </DialogHeader>
 
-    return (
-        <Dialog open={isCreateModalOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-100 p-8 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-xl rounded-xl">
-                <DialogHeader className="mb-4">
-                    <DialogTitle className="text-2xl font-bold text-center text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        Add New Admin
-                    </DialogTitle>
-                    <DialogDescription className="text-center text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                        Create a new administrator account.
-                    </DialogDescription>
-                </DialogHeader>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="fullName" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Full Name
-                        </Label>
-                        <Input 
-                            id="fullName"
-                            name="fullName"
-                            placeholder="e.g. John Doe"
-                            value={formData.fullName}
-                            onChange={handleChange}
-                            disabled={isSubmitting}
-                            className="bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus-visible:ring-indigo-500"
-                        />
+        {submitError && (
+          <div className="w-full mb-6 p-4 rounded-md flex items-start gap-3 bg-destructive/10 text-destructive border border-destructive/20 animate-in fade-in slide-in-from-top-2 duration-300">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-sm font-medium leading-relaxed">{submitError}</p>
+          </div>
+        )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-medium text-foreground">
+                    Full Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="e.g. John Doe"
+                      disabled={isLoading}
+                      className="h-11 px-3.5 py-2.5 bg-zinc-200/30 dark:bg-zinc-800 text-sm border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-foreground/40 transition-colors [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#f4f4f5_inset] dark:[&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#18181b_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--foreground)]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[10px] font-mono text-destructive" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-medium text-foreground">
+                    Email Address
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="admin@provenode.com"
+                      disabled={isLoading}
+                      className="h-11 px-3.5 py-2.5 bg-zinc-200/30 dark:bg-zinc-800 text-sm border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-foreground/40 transition-colors [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#f4f4f5_inset] dark:[&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#18181b_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--foreground)]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-[10px] font-mono text-destructive" />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-sm font-medium text-foreground">
+                    Temporary Password
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                        className="h-11 pl-3.5 pr-10 py-2.5 bg-zinc-200/30 dark:bg-zinc-800 text-sm border border-border text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-foreground/40 transition-colors [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#f4f4f5_inset] dark:[&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#18181b_inset] [&:-webkit-autofill]:[-webkit-text-fill-color:var(--foreground)]"
+                        {...field}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        title={showPassword ? "Hide Password" : "Show Password"}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="email" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Email Address
-                        </Label>
-                        <Input 
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="admin@provenode.com"
-                            value={formData.email}
-                            onChange={handleChange}
-                            disabled={isSubmitting}
-                            className="bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus-visible:ring-indigo-500"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="password" className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            Temporary Password
-                        </Label>
-                        <div className="relative">
-                            <Input 
-                                id="password"
-                                name="password"
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••"
-                                value={formData.password}
-                                onChange={handleChange}
-                                disabled={isSubmitting}
-                                className="bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus-visible:ring-indigo-500 pr-10"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
-                            >
-                                {showPassword ? (
-                                    <EyeOff className="h-4 w-4" />
-                                ) : (
-                                    <Eye className="h-4 w-4" />
-                                )}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="pt-2">
-                        <Button 
-                            type="submit" 
-                            disabled={isSubmitting}
-                            className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 font-medium h-10 transition-colors"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                                    Creating...
-                                </>
-                            ) : (
-                                "Create Admin"
-                            )}
-                        </Button>
-                    </div>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
+                  </FormControl>
+                  <FormMessage className="text-[10px] font-mono text-destructive" />
+                </FormItem>
+              )}
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-11 mt-2 inline-flex items-center justify-center gap-2 rounded-md py-3.5 px-4 text-sm font-medium transition-all duration-150 bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-wait cursor-pointer"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                  Creating...
+                </>
+              ) : (
+                "Create Admin"
+              )}
+            </button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
 }

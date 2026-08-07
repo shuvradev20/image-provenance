@@ -205,7 +205,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
               title="Copy uploader address"
               className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors shrink-0"
             >
-              {copiedField === "uploader" ? <CopyCheck className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedField === "uploader" ? <CopyCheck className="w-3.5 h-3.5 text-foreground" /> : <Copy className="w-3.5 h-3.5 text-muted" />}
             </button>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function AssetOwnershipControls({ asset, isOwner, onUpdateSuccess
               title="Copy owner address"
               className="text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors shrink-0"
             >
-              {copiedField === "owner" ? <CopyCheck className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedField === "owner" ? <CopyCheck className="w-3.5 h-3.5 text-foreground" /> : <Copy className="w-3.5 h-3.5 text-muted" />}
             </button>
           </div>
         </div>
