@@ -41,10 +41,10 @@ contract ImageProvenance is Ownable2Step {
      */
     struct Image {
         bytes32 imageHash; 
-        bytes32 watermarkID;
+        bytes4 watermarkID;
         string metadataCID; 
         address currentOwner; // Current wallet address of the image owner
-        uint256 timestamp; // Block timestamp when the image was registered
+        uint64 timestamp; // Block timestamp when the image was registered
         bool isBurned; // True if the owner decides to remove the image's validity
     }
 
@@ -57,7 +57,7 @@ contract ImageProvenance is Ownable2Step {
     mapping(bytes32 => bool) public imageExists;
 
     // @dev Maps a watermark ID to its original image hash (Prevents Shadow Ownership)
-    mapping(bytes32 => bytes32) public watermarkToOriginal;
+    mapping(bytes4 => bytes32) public watermarkToOriginal;
 
     /// @dev Registry of authorized users who can interact with the contract
     mapping(address => bool) public isUserRegistered;
@@ -71,7 +71,7 @@ contract ImageProvenance is Ownable2Step {
     // --- Events ---
 
     event UserRegistered(address indexed user);
-    event ImageRegistered(address indexed creator, bytes32 indexed hash, bytes32 watermarkID, string metadataCID);
+    event ImageRegistered(address indexed creator, bytes32 indexed hash, bytes4 watermarkID, string metadataCID);
     event ImageTransferred(bytes32 indexed hash, address indexed from, address indexed to);
     event ImageBurned(bytes32 indexed hash, address indexed owner);
     event MetadataUpdated(bytes32 indexed hash, string newMetadataCID);
@@ -101,7 +101,7 @@ contract ImageProvenance is Ownable2Step {
      */
     function registerImage(
         bytes32 _imageHash,
-        bytes32 _watermarkID,
+        bytes4 _watermarkID,
         string calldata _metadataCID,
         bytes calldata _signature
     ) external {
@@ -224,7 +224,7 @@ contract ImageProvenance is Ownable2Step {
      * @return status A string explaining the provenance state (Authentic, Tempered, or Unknown).
      * @return originalOwner The true owner of the asset (Address zero if unknown).
      */
-    function verify(bytes32 _newHash, bytes32 _extractedWatermarkID) external view returns (string memory status, address originalOwner) {
+    function verify(bytes32 _newHash, bytes4 _extractedWatermarkID) external view returns (string memory status, address originalOwner) {
         bytes32 originalHash = watermarkToOriginal[_extractedWatermarkID];
 
         if(originalHash == bytes32(0)) {

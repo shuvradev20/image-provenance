@@ -8,4 +8,5 @@ const ImageProvenanceModule = buildModule("ImageProvenanceModule", (m) => {
 export default ImageProvenanceModule;
 
 
-// deployedAddress: 0xe8dE3089dCFf50b247C5e801D43830460C98f17B
+
+// deployedAddress: 0xc9EBa5fB6D3c74B47568a1917dd31303E158a059

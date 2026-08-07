@@ -8,13 +8,13 @@ describe("ImageProvenance Full Audit", function() {
     const [owner, user1, user2, hacker] = await ethers.getSigners();
     const ImageProvenance = await ethers.getContractFactory("ImageProvenance");
     const contract = await ImageProvenance.deploy();
-    contract.waitForDeployment();
+    await contract.waitForDeployment();
 
     return {contract, owner, user1, user2, hacker};
   }
 
   const imageHash = ethers.id("thesis_image");
-  const watermarkID = ethers.id("invisible_dna");
+  const watermarkID = "0x1a2b3c4d";
   const metadataCID = "ipfs://QmPinataCID";
 
   describe("1. user management", function() {
@@ -49,8 +49,8 @@ describe("ImageProvenance Full Audit", function() {
     it("Should allow registered user to register image with valid signature", async function() {
       const {contract, user1} = await networkHelpers.loadFixture(registeredUserFixture);
 
-      const messagehash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
-      const signature = await user1.signMessage(ethers.getBytes(messagehash));
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
+      const signature = await user1.signMessage(ethers.getBytes(messageHash));
 
       await expect(contract.connect(user1).registerImage(imageHash, watermarkID, metadataCID, signature))
       .to.emit(contract, "ImageRegistered")
@@ -64,7 +64,7 @@ describe("ImageProvenance Full Audit", function() {
       const {contract, owner, user1, hacker} = await networkHelpers.loadFixture(registeredUserFixture);
       await contract.connect(owner).registerUser(hacker.address);
 
-      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
       const signature = await user1.signMessage(ethers.getBytes(messageHash));
 
       await expect(contract.connect(hacker).registerImage(imageHash, watermarkID, metadataCID, signature))
@@ -78,7 +78,7 @@ describe("ImageProvenance Full Audit", function() {
       await setup.contract.connect(setup.owner).registerUser(setup.user1.address);
       await setup.contract.connect(setup.owner).registerUser(setup.user2.address);
 
-      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
       const signature = await setup.user1.signMessage(ethers.getBytes(messageHash));
       await setup.contract.connect(setup.user1).registerImage(imageHash, watermarkID, metadataCID, signature);
 
@@ -114,8 +114,8 @@ describe("ImageProvenance Full Audit", function() {
     async function registeredImageFixture() {
       const setup = await deployFixture();
       await setup.contract.connect(setup.owner).registerUser(setup.user1.address);
-      const msgHash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
-      const signature = await setup.user1.signMessage(ethers.getBytes(msgHash));
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
+      const signature = await setup.user1.signMessage(ethers.getBytes(messageHash));
       await setup.contract.connect(setup.user1).registerImage(imageHash, watermarkID, metadataCID, signature);
       return setup;
     }
@@ -144,8 +144,8 @@ describe("ImageProvenance Full Audit", function() {
     async function registeredImageFixture() {
       const setup = await deployFixture();
       await setup.contract.connect(setup.owner).registerUser(setup.user1.address);
-      const msgHash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
-      const signature = await setup.user1.signMessage(ethers.getBytes(msgHash));
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
+      const signature = await setup.user1.signMessage(ethers.getBytes(messageHash));
       await setup.contract.connect(setup.user1).registerImage(imageHash, watermarkID, metadataCID, signature);
       return setup;
     }
@@ -166,8 +166,8 @@ describe("ImageProvenance Full Audit", function() {
     async function registeredImageFixture() {
       const setup = await deployFixture();
       await setup.contract.connect(setup.owner).registerUser(setup.user1.address);
-      const msgHash = ethers.solidityPackedKeccak256(["bytes32", "bytes32"], [imageHash, watermarkID]);
-      const signature = await setup.user1.signMessage(ethers.getBytes(msgHash));
+      const messageHash = ethers.solidityPackedKeccak256(["bytes32", "bytes4"], [imageHash, watermarkID]);
+      const signature = await setup.user1.signMessage(ethers.getBytes(messageHash));
       await setup.contract.connect(setup.user1).registerImage(imageHash, watermarkID, metadataCID, signature);
       return setup;
     }
@@ -192,7 +192,7 @@ describe("ImageProvenance Full Audit", function() {
     it("Should return 'New or Unknown Asset' for a completely unregistered image", async function () {
       const { contract } = await networkHelpers.loadFixture(registeredImageFixture);
       const completelyFakeHash = ethers.id("totally_random_hash_from_internet"); 
-      const completelyFakeWatermarkID = ethers.id("fake_id_from_another_galaxy");
+      const completelyFakeWatermarkID = "0x99887766";
       const [status, originalOwner] = await contract.verify(completelyFakeHash, completelyFakeWatermarkID);
       
       expect(status).to.equal("New or Unknown Asset");
