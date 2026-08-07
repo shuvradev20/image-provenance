@@ -52,6 +52,8 @@ export function AdminLoginForm() {
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message || 
         "Invalid credentials. Please try again.";
       setAuthError(errMessage);
+    } finally {
+      setIsLoading(false); 
     }
   };
 
@@ -95,7 +97,6 @@ export function AdminLoginForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
           <FormField
             control={form.control}
             name="email"

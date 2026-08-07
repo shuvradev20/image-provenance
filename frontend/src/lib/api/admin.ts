@@ -1,8 +1,8 @@
-import adminApi from "../adminAxiosInstance"; // Apnar path onujayi ektu check kore niben
+import adminApi from "../adminAxiosInstance";
 
 export const loginAdminApi = async (credentials: { email: string; password: string }) => {
     const response = await adminApi.post('/admin/sessions', credentials);
-    return response.data;
+    return response.data; 
 };
 
 export const getCurrentAdminApi = async () => {

@@ -57,13 +57,13 @@ export const useAdminStore = create<AdminAuthState>()(
       adminPagination: { totalAdmins: 0, currentPage: 1, totalPages: 1, limit: 10 },
 
       loginAdmin: async (credentials) => {
-        set({ adminError: null });
+        set({ adminError: null, isLoading: true });
 
         try {
-          const response = await loginAdminApi(credentials); 
-          const responseData = response.data?.data || response.data;
-          const adminData = responseData?.admin || responseData;
-          const accessToken = responseData?.accessToken;
+          const responseData = await loginAdminApi(credentials); 
+          const actualData = responseData?.data || responseData; 
+          const adminData = actualData?.admin;
+          const accessToken = actualData?.accessToken;
 
           if (accessToken && typeof window !== 'undefined') {
             localStorage.setItem('adminAccessToken', accessToken);
@@ -77,7 +77,8 @@ export const useAdminStore = create<AdminAuthState>()(
         } catch (error: any) {
           console.error("Admin Login Failed:", error);
           set({ 
-            adminError: error.response?.data?.message || "Failed to login admin" 
+            adminError: error.response?.data?.message || "Failed to login admin",
+            isLoading: false
           });
           throw error;
         }
