@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { Copy, Check, X, ZoomIn, ShieldCheck } from "lucide-react";
+import { Copy, Check, X, ZoomIn, ShieldCheck, CopyCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -80,7 +80,7 @@ export function ReviewKycModal() {
         <>
             <Dialog open={isPendingModalOpen} onOpenChange={handleClose}>
                 <DialogContent 
-                    className="w-[95vw] sm:max-w-xl bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 overflow-hidden shadow-2xl rounded-xl max-h-[90vh] overflow-y-auto"
+                    className="w-[92vw] sm:max-w-md bg-card border-border p-5 overflow-hidden shadow-2xl rounded-xl max-h-[90vh] overflow-y-auto"
                     onInteractOutside={(e) => {
                         if (zoomedImage) {
                             e.preventDefault(); 
@@ -95,52 +95,61 @@ export function ReviewKycModal() {
                     <DialogTitle className="sr-only">Review KYC details for {selectedUser.fullName}</DialogTitle>
                     <DialogDescription className="sr-only">Review user documents and approve them for smart contract registration.</DialogDescription>
                     
-                    <div className="flex flex-col space-y-6">
-                        
-                        <div>
-                            <div className="flex items-center gap-3 mb-1">
-                                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">{selectedUser.fullName}</h2>
-                                <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500 text-[10px] font-semibold border border-amber-200 dark:border-amber-500/20 uppercase tracking-widest shrink-0">
+                    <div className="flex flex-col space-y-5">
+                        <div className="border-b border-border pb-3.5">
+                            <div className="flex items-center gap-2.5 mb-1">
+                                <h2 className="text-sm font-semibold text-foreground tracking-tight">{selectedUser.fullName}</h2>
+                                <span 
+                                    style={{
+                                        backgroundColor: "color-mix(in oklch, var(--status-warning, oklch(0.769 0.188 70.08)) 12%, transparent)",
+                                        color: "var(--status-warning, oklch(0.769 0.188 70.08))",
+                                        borderColor: "color-mix(in oklch, var(--status-warning, oklch(0.769 0.188 70.08)) 30%, transparent)"
+                                    }}
+                                    className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold border uppercase tracking-wider shrink-0"
+                                >
                                     Pending Review
                                 </span>
                             </div>
-                            <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 mt-1 sm:mt-0">
-                                <span className="font-mono text-sm break-all">{selectedUser.walletAddress}</span>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <span className="font-mono text-[10px] break-all" title={selectedUser.walletAddress}>
+                                    {selectedUser.walletAddress}
+                                </span>
                                 <button 
                                     onClick={() => copyToClipboard(selectedUser.walletAddress)}
-                                    className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors shrink-0"
+                                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
                                     title="Copy Wallet Address"
                                 >
-                                    {isCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                                    {isCopied ? <CopyCheck className="w-3.5 h-3.5 text-foreground" /> : <Copy className="w-3.5 h-3.5" />}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Email Address</p>
-                                <p className="text-sm text-zinc-800 dark:text-zinc-200 break-all">{selectedUser.email}</p>
+                        <div className="space-y-2.5 py-0.5 font-mono text-[10px]">
+                            <div className="flex items-center justify-between py-1">
+                                <span className="text-muted-foreground">Email Address</span>
+                                <span className="text-foreground font-sans break-all">{selectedUser.email}</span>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Applied Date</p>
-                                <p className="text-sm text-zinc-800 dark:text-zinc-200">
+                            <div className="flex items-center justify-between py-1">
+                                <span className="text-muted-foreground">Applied Date</span>
+                                <span className="text-foreground font-mono">
                                     {format(new Date(selectedUser.kycSubmittedAt || new Date()), "dd MMM yyyy, hh:mm a")}
-                                </p>
+                                </span>
                             </div>
-                            <div>
-                                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-1">Gov ID Number</p>
-                                <p className="text-sm text-zinc-800 dark:text-zinc-200 font-mono">
-                                    {selectedUser.governmentId || <span className="text-zinc-400 dark:text-zinc-600 italic font-sans">Not Provided</span>}
-                                </p>
+                            <div className="flex items-center justify-between py-1">
+                                <span className="text-muted-foreground">Gov ID Number</span>
+                                <span className="text-foreground font-mono">
+                                    {selectedUser.governmentId || <span className="text-muted-foreground italic font-sans">Not Provided</span>}
+                                </span>
                             </div>
                         </div>
 
-                        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Gov ID</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Gov ID</p>
                                 <div 
                                     onClick={() => selectedUser.govIdImageUrl && setZoomedImage(selectedUser.govIdImageUrl)}
-                                    className="relative group aspect-4/3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/30 overflow-hidden cursor-zoom-in"
+                                    className="relative group aspect-4/3 rounded-lg border border-border bg-zinc-200/30 dark:bg-zinc-900/50 overflow-hidden cursor-zoom-in"
+                                    title="Click to zoom Gov ID image"
                                 >
                                     {selectedUser.govIdImageUrl ? (
                                         <>
@@ -149,21 +158,22 @@ export function ReviewKycModal() {
                                                 alt="Gov ID" 
                                                 className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                                             />
-                                            <div className="absolute inset-0 bg-black/30 dark:bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <ZoomIn className="text-white w-6 h-6" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <ZoomIn className="text-white w-4 h-4" />
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs bg-zinc-100 dark:bg-zinc-900/50">No Image</div>
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px] font-mono">No Image</div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">Selfie</p>
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Selfie</p>
                                 <div 
                                     onClick={() => selectedUser.selfieWithGovIdUrl && setZoomedImage(selectedUser.selfieWithGovIdUrl)}
-                                    className="relative group aspect-4/3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/30 overflow-hidden cursor-zoom-in"
+                                    className="relative group aspect-4/3 rounded-lg border border-border bg-zinc-200/30 dark:bg-zinc-900/50 overflow-hidden cursor-zoom-in"
+                                    title="Click to zoom Selfie image"
                                 >
                                     {selectedUser.selfieWithGovIdUrl ? (
                                         <>
@@ -172,41 +182,43 @@ export function ReviewKycModal() {
                                                 alt="Selfie" 
                                                 className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                                             />
-                                            <div className="absolute inset-0 bg-black/30 dark:bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <ZoomIn className="text-white w-6 h-6" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <ZoomIn className="text-white w-4 h-4" />
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-zinc-400 dark:text-zinc-600 text-xs bg-zinc-100 dark:bg-zinc-900/50">No Image</div>
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-[10px] font-mono">No Image</div>
                                     )}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-6 pt-5 border-t border-zinc-200 dark:border-zinc-800/60 flex flex-col-reverse sm:flex-row justify-end items-center gap-3">
+                        <div className="mt-4 pt-3.5 border-t border-border flex flex-col-reverse sm:flex-row justify-end items-center gap-2.5">
                             {!rejectMode ? (
                                 <>
                                     <Button 
                                         variant="ghost" 
                                         onClick={() => setRejectMode(true)}
                                         disabled={isApproving}
-                                        className="w-full sm:w-auto text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium"
+                                        className="w-full sm:w-auto text-muted-foreground hover:text-status-error hover:bg-zinc-200/80 dark:hover:bg-zinc-800 text-xs font-medium rounded-md h-8 px-3 cursor-pointer"
+                                        title="Reject KYC Submission"
                                     >
                                         Reject
                                     </Button>
                                     <Button 
                                         onClick={handleApprove}
                                         disabled={isApproving}
-                                        className="w-full sm:w-auto bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-950 font-semibold gap-2 shadow-sm"
+                                        className="w-full sm:w-auto bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98] text-xs font-medium gap-1.5 shadow-sm rounded-md h-8 px-3.5 cursor-pointer"
+                                        title="Approve & Register on Smart Contract"
                                     >
                                         {isApproving ? (
-                                            <span className="flex items-center gap-2">
-                                                <div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                            <span className="flex items-center gap-1.5 font-mono text-xs">
+                                                <div className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
                                                 Executing...
                                             </span>
                                         ) : (
                                             <>
-                                                <ShieldCheck className="w-4 h-4" />
+                                                <ShieldCheck className="w-3.5 h-3.5" />
                                                 Approve & Register
                                             </>
                                         )}
@@ -214,29 +226,31 @@ export function ReviewKycModal() {
                                 </>
                             ) : (
                                 <div className="flex flex-col sm:flex-row items-center gap-2 animate-in slide-in-from-right-4 w-full sm:w-auto">
-                                    <div className="flex w-full sm:w-auto items-center gap-2">
+                                    <div className="flex w-full sm:w-auto items-center gap-1.5">
                                         <input 
                                             type="text" 
                                             placeholder="Reason..." 
                                             value={rejectReason}
                                             onChange={(e) => setRejectReason(e.target.value)}
-                                            className="flex h-9 w-full sm:w-62.5 rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent dark:bg-zinc-900 px-3 py-1 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500/50"
+                                            className="flex h-8 w-full sm:w-48 rounded-md border border-border bg-transparent px-2.5 py-1 font-mono text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-status-error"
                                             autoFocus
                                         />
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
-                                            className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300 shrink-0"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
                                             onClick={() => { setRejectMode(false); setRejectReason(""); }}
+                                            title="Cancel Rejection"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <X className="w-3.5 h-3.5" />
                                         </Button>
                                     </div>
                                     <Button 
                                         variant="destructive" 
                                         onClick={handleReject}
                                         disabled={isRejecting}
-                                        className="w-full sm:w-auto font-medium shrink-0 mt-2 sm:mt-0"
+                                        className="w-full sm:w-auto font-medium text-xs shrink-0 h-8 px-3 rounded-md"
+                                        title="Confirm Rejection"
                                     >
                                         Confirm Reject
                                     </Button>
