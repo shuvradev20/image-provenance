@@ -213,14 +213,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     },
 
     listenToWalletChanges: () => {
-        watchConnection(config, {
-            onChange(connection) {
-                if (connection.address) {
-                    set({ currentActiveWallet: connection.address.toLowerCase() });
-                } else {
-                    set({ currentActiveWallet: null });
-                }
-            },
-        });
-    }
+    const unwatch = watchConnection(config, {
+        onChange(connection) {
+            const newAddress = connection.address ? connection.address.toLowerCase() : null;
+            const currentWallet = get().currentActiveWallet;
+
+            if (newAddress !== currentWallet) {
+                set({ currentActiveWallet: newAddress });
+            }
+        },
+    });
+
+    return unwatch;
+}
 }));

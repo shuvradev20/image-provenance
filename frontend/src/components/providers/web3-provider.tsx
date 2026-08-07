@@ -1,13 +1,11 @@
 'use client'
 
-import { ReactNode, useEffect } from 'react'
+import React, { ReactNode, useState, useEffect } from 'react'
 import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { wagmiAdapter, projectId, networks } from '@/config'
 import { useTheme } from 'next-themes'
-
-const queryClient = new QueryClient()
 
 if (!projectId) {
   throw new Error('Project ID is missing!')
@@ -18,7 +16,7 @@ createAppKit({
   projectId,
   networks,
   features: {
-    analytics: true
+    analytics: false
   }
 })
 
@@ -36,6 +34,8 @@ function AppKitThemeSync() {
 }
 
 export function Web3Provider({ children }: { children: ReactNode }) {
+  const [queryClient] = useState(() => new QueryClient())
+
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
