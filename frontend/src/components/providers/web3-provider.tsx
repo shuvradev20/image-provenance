@@ -20,7 +20,6 @@ createAppKit({
     email: false,
     socials: false,
   },
-  allWallets: 'HIDE', 
 })
 
 function AppKitThemeSync() {
@@ -37,13 +36,26 @@ function AppKitThemeSync() {
 }
 
 export function Web3Provider({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient())
+  const [mounted, setMounted] = useState(false)
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: false,
+      },
+    },
+  }))
+
+  // 💡 SSR Mismatch prevent korar jonno Mount Guard
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <AppKitThemeSync />
-        {children}
+        {mounted ? children : null}
       </QueryClientProvider>
     </WagmiProvider>
   )
