@@ -904,7 +904,6 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
         const extractResponse = await axios.post(`${config.watermarkEngineUrl}/extract-watermark`, extractionForm, {
             headers: { 
                 ...extractionForm.getHeaders(), 
-                timeout: 60000,
                 maxContentLength: Infinity,
                 maxBodyLength: Infinity }
         });
