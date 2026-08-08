@@ -897,11 +897,16 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
     extractionForm.append('image', req.file.buffer, {
         filename: req.file.originalname,
         contentType: req.file.mimetype,
+        knownLength: req.file.buffer.length
     });
 
     try {
         const extractResponse = await axios.post(`${config.watermarkEngineUrl}/extract-watermark`, extractionForm, {
-            headers: { ...extractionForm.getHeaders() }
+            headers: { 
+                ...extractionForm.getHeaders(), 
+                timeout: 60000,
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity }
         });
 
         if (extractResponse.data && extractResponse.data.status === "found" && extractResponse.data.watermark_id) {
