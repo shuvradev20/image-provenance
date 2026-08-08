@@ -922,8 +922,14 @@ const verifyImage = asyncHandler(async (req: Request, res: Response) => {
                 }
             }
         }
-    } catch (error) {
+    } catch (error: any) {
         if (error instanceof ApiError) throw error;
+        console.error("--- DEBUG PRODUCTION ERROR ---");
+        console.error("Status:", error.response?.status);
+        console.error("Data:", error.response?.data);
+        console.error("Message:", error.message);
+        console.error("-----------------------------");
+
         throw new ApiError(500, "Verification Engine Error: Failed to extract ProveNode DNA. Please try again later.");
     }
 
